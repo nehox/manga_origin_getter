@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from typing import Optional
 from uuid import uuid4
 
 from app.adapters.registry import AdapterRegistry
@@ -19,14 +20,33 @@ class JobRunner:
         self.data_dir = data_dir
 
     async def create_job(self, request: JobCreateRequest) -> JobState:
+        output_dir = self._resolve_output_dir(request.output_dir)
         job = JobState(
             id=str(uuid4()),
             source_url=request.source_url,
             status=JobStatus.PENDING,
+            output_dir=str(output_dir),
         )
         await self.repository.create(job)
         asyncio.create_task(self._run_job(job.id, str(request.source_url), request.max_concurrency))
         return job
+
+    def _resolve_output_dir(self, output_dir: Optional[str]) -> Path:
+        if output_dir and output_dir.strip():
+            resolved = Path(output_dir).expanduser().resolve()
+            resolved.mkdir(parents=True, exist_ok=True)
+            return resolved
+
+        default_dir = self.data_dir / "exports"
+        default_dir.mkdir(parents=True, exist_ok=True)
+        return default_dir
+
+    def _job_pdf_dir(self, job: JobState) -> Path:
+        root = Path(job.output_dir or (self.data_dir / "exports")).expanduser().resolve()
+        work_folder = to_slug(job.work_title or "manga")
+        pdf_dir = root / work_folder
+        pdf_dir.mkdir(parents=True, exist_ok=True)
+        return pdf_dir
 
     async def _run_job(self, job_id: str, source_url: str, max_concurrency: int) -> None:
         job = await self.repository.get(job_id)
@@ -101,9 +121,9 @@ class JobRunner:
             adapter = self.registry.resolve(str(job.source_url))
             image_urls = await adapter.extract_image_urls(chapter_url)
 
-            chapter_dir = self.data_dir / job_id / to_slug(chapter_title)
+            chapter_dir = self.data_dir / job_id / chapter_slug
             image_dir = chapter_dir / "images"
-            pdf_dir = chapter_dir / "pdf"
+            pdf_dir = self._job_pdf_dir(job)
 
             image_paths = await download_images(image_urls, image_dir, max_concurrency=max_concurrency)
 
@@ -112,7 +132,7 @@ class JobRunner:
             job.status = JobStatus.ASSEMBLING
             await self.repository.update(job)
 
-            pdf_path = pdf_dir / f"{to_slug(chapter_title)}.pdf"
+            pdf_path = pdf_dir / f"{chapter_slug}.pdf"
             build_pdf_from_images(image_paths, pdf_path)
 
             chapter.status = JobStatus.DONE

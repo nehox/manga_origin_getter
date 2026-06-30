@@ -35,6 +35,7 @@ async def create_job(request: JobCreateRequest) -> JobView:
         work_title=job.work_title,
         total_chapters=job.total_chapters,
         completed_chapters=job.completed_chapters,
+        output_dir=job.output_dir,
         error=job.error,
     )
 

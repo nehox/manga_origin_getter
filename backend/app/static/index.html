@@ -99,6 +99,10 @@
         <input id="sourceUrl" placeholder="https://mangas-origines.fr/oeuvre/demon-slave/" />
         <button id="launchBtn">Lancer</button>
       </div>
+      <div class="row">
+        <input id="outputDir" placeholder="Chemin de sortie PDF (ex: /Users/toi/Downloads/manga-pdf)" />
+        <div></div>
+      </div>
       <div class="status" id="status">Aucun job en cours.</div>
       <table>
         <thead>
@@ -117,6 +121,7 @@
 
   <script>
     const sourceUrlInput = document.getElementById("sourceUrl");
+    const outputDirInput = document.getElementById("outputDir");
     const launchBtn = document.getElementById("launchBtn");
     const statusEl = document.getElementById("status");
     const chapterBody = document.getElementById("chapterBody");
@@ -126,6 +131,7 @@
 
     launchBtn.addEventListener("click", async () => {
       const sourceUrl = sourceUrlInput.value.trim();
+      const outputDir = outputDirInput.value.trim();
       if (!sourceUrl) {
         statusEl.textContent = "Entrer une URL valide.";
         return;
@@ -139,7 +145,11 @@
         const response = await fetch("/jobs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source_url: sourceUrl, max_concurrency: 4 })
+          body: JSON.stringify({
+            source_url: sourceUrl,
+            max_concurrency: 4,
+            output_dir: outputDir || null
+          })
         });
 
         if (!response.ok) {
@@ -173,6 +183,7 @@
             `<div><strong>Oeuvre:</strong> ${job.work_title || "-"}</div>`,
             `<div><strong>Etat:</strong> ${job.status}</div>`,
             `<div><strong>Progression:</strong> ${job.completed_chapters}/${job.total_chapters}</div>`,
+            `<div><strong>Dossier PDF:</strong> ${job.output_dir || "-"}</div>`,
             job.error ? `<div><strong>Erreur:</strong> ${job.error}</div>` : ""
           ].join("");
 

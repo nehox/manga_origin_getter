@@ -14,7 +14,7 @@ from app.services.slug import to_slug
 
 class MangasOriginesAdapter(SourceAdapter):
     host = "mangas-origines.fr"
-    chapter_number_re = re.compile(r"/chapitre-(\d+)/?", re.IGNORECASE)
+    chapter_slug_re = re.compile(r"/chapitre-([^/]+)/?", re.IGNORECASE)
 
     def supports(self, source_url: str) -> bool:
         parsed = urlparse(source_url)
@@ -44,7 +44,8 @@ class MangasOriginesAdapter(SourceAdapter):
             chapter_url = urljoin(source_url, href)
             if not chapter_url.startswith(expected_prefix):
                 continue
-            chapter_title = anchor.get_text(" ", strip=True) or chapter_url.rstrip("/").split("/")[-1]
+            raw_title = anchor.get_text(" ", strip=True)
+            chapter_title = self._chapter_title_from_raw(raw_title, chapter_url)
             chapter_slug = to_slug(chapter_title)
             chapter_links[chapter_url] = ChapterDescriptor(
                 title=chapter_title,
@@ -87,6 +88,7 @@ class MangasOriginesAdapter(SourceAdapter):
                 continue
 
             chapter_title = anchor.get_text(" ", strip=True) or chapter_url.rstrip("/").split("/")[-1]
+            chapter_title = self._chapter_title_from_raw(chapter_title, chapter_url)
             chapters[chapter_url] = ChapterDescriptor(
                 title=chapter_title,
                 url=chapter_url,
@@ -135,14 +137,59 @@ class MangasOriginesAdapter(SourceAdapter):
         if heading:
             text = heading.get_text(" ", strip=True)
             if text:
-                return text
+                return self._chapter_title_from_raw(text, chapter_url)
+        return self._chapter_title_from_raw("", chapter_url)
+
+    def _chapter_token_from_url(self, chapter_url: str) -> Optional[str]:
+        match = self.chapter_slug_re.search(chapter_url)
+        if not match:
+            return None
+        return match.group(1).strip().lower()
+
+    def _chapter_title_from_raw(self, raw_title: str, chapter_url: str) -> str:
+        token = self._chapter_token_from_url(chapter_url)
+        cleaned = (raw_title or "").strip()
+
+        if token:
+            generic_labels = {
+                "read first",
+                "first chapter",
+                "dernier chapitre",
+                "latest chapter",
+                "latest",
+            }
+            has_digit = bool(re.search(r"\d", cleaned))
+            if not cleaned or cleaned.lower() in generic_labels or not has_digit:
+                return f"Chapitre {token}"
+
+        if cleaned:
+            return cleaned
+
+        if token:
+            return f"Chapitre {token}"
         return chapter_url.rstrip("/").split("/")[-1].replace("-", " ").title()
 
+    def _chapter_numeric_key(self, chapter_url: str) -> tuple[int, int]:
+        token = self._chapter_token_from_url(chapter_url)
+        if not token:
+            return 10**9, 10**9
+
+        parts = token.split("-")
+        if parts and parts[0].isdigit():
+            main_part = int(parts[0])
+            if len(parts) > 1 and parts[1].isdigit():
+                return main_part, int(parts[1])
+            return main_part, 0
+
+        match = re.search(r"(\d+)", token)
+        if match:
+            return int(match.group(1)), 0
+        return 10**9, 10**9
+
     def _find_next_chapter_url(self, soup: BeautifulSoup, chapter_url: str, expected_prefix: str) -> Optional[str]:
-        current_match = self.chapter_number_re.search(chapter_url)
-        if not current_match:
+        current_key = self._chapter_numeric_key(chapter_url)
+        if current_key[0] >= 10**9:
             return None
-        current_number = int(current_match.group(1))
 
         candidates: set[str] = set()
         for anchor in soup.select("a[href]"):
@@ -154,14 +201,13 @@ class MangasOriginesAdapter(SourceAdapter):
                 continue
             candidates.add(candidate)
 
-        next_candidates: list[tuple[int, str]] = []
+        next_candidates: list[tuple[tuple[int, int], str]] = []
         for candidate in candidates:
-            match = self.chapter_number_re.search(candidate)
-            if not match:
+            candidate_key = self._chapter_numeric_key(candidate)
+            if candidate_key[0] >= 10**9:
                 continue
-            number = int(match.group(1))
-            if number > current_number:
-                next_candidates.append((number, candidate))
+            if candidate_key > current_key:
+                next_candidates.append((candidate_key, candidate))
 
         if not next_candidates:
             return None
@@ -169,10 +215,8 @@ class MangasOriginesAdapter(SourceAdapter):
         return next_candidates[0][1]
 
     def _chapter_sort_key(self, chapter_url: str) -> tuple[int, str]:
-        match = self.chapter_number_re.search(chapter_url)
-        if match:
-            return int(match.group(1)), chapter_url
-        return 10**9, chapter_url
+        numeric = self._chapter_numeric_key(chapter_url)
+        return (numeric[0] * 10000 + numeric[1]), chapter_url
 
     async def extract_image_urls(self, chapter_url: str) -> list[str]:
         html = await self._fetch_html(chapter_url)

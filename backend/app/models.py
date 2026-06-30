@@ -35,6 +35,7 @@ class ChapterArtifact(BaseModel):
 class JobCreateRequest(BaseModel):
     source_url: HttpUrl
     max_concurrency: int = Field(default=4, ge=1, le=12)
+    output_dir: Optional[str] = None
 
 
 class JobState(BaseModel):
@@ -44,6 +45,7 @@ class JobState(BaseModel):
     work_title: Optional[str] = None
     total_chapters: int = 0
     completed_chapters: int = 0
+    output_dir: Optional[str] = None
     error: Optional[str] = None
     chapter_artifacts: list[ChapterArtifact] = Field(default_factory=list)
 
@@ -55,6 +57,7 @@ class JobView(BaseModel):
     work_title: Optional[str]
     total_chapters: int
     completed_chapters: int
+    output_dir: Optional[str]
     error: Optional[str]
 
 

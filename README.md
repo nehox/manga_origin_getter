@@ -4,7 +4,7 @@ MVP backend web qui prend une URL oeuvre, découvre tous les chapitres, récupè
 
 ## Stack actuelle
 
-- Python 3.11+
+- Python 3.9+
 - FastAPI
 - httpx + BeautifulSoup (extraction)
 - Pillow (assemblage PDF)
@@ -74,6 +74,18 @@ Puis relancer le serveur.
 - POST /jobs
 - GET /jobs/{job_id}
 - GET /jobs/{job_id}/chapters/{chapter_slug}/pdf
+
+### POST /jobs exemple
+
+```json
+{
+	"source_url": "https://mangas-origines.fr/oeuvre/demon-slave/",
+	"max_concurrency": 4,
+	"output_dir": "/Users/toi/Downloads/manga-pdf"
+}
+```
+
+`output_dir` est optionnel. Quand il est fourni, tous les PDF du job sont ecrits dans ce dossier, sous un sous-dossier du nom de l'oeuvre.
 
 ## Limites du démarrage
 
