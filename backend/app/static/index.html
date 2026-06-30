@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manga Origin Getter</title>
+  <style>
+    :root {
+      --bg: #f3f0e8;
+      --card: #fffaf2;
+      --ink: #1d2b2a;
+      --muted: #5a6c68;
+      --accent: #0b8f6a;
+      --accent-2: #d95b43;
+      --line: #d7cdbf;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 0% 0%, #ffe2ba 0, transparent 35%),
+        radial-gradient(circle at 100% 100%, #d5f4dc 0, transparent 40%),
+        var(--bg);
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(29, 43, 42, 0.09);
+    }
+    header {
+      padding: 24px;
+      background: linear-gradient(120deg, #f8d7a8, #bee8cf);
+      border-bottom: 1px solid var(--line);
+    }
+    h1 { margin: 0; font-size: 2rem; letter-spacing: 0.02em; }
+    p { color: var(--muted); margin-top: 8px; }
+    main { padding: 24px; display: grid; gap: 18px; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+    input, button {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 12px 14px;
+      font: inherit;
+    }
+    input { background: #fff; }
+    button {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .status {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .status strong { color: var(--accent-2); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    th { background: #f5ede0; }
+    tr:last-child td { border-bottom: none; }
+    .ok { color: #0b8f6a; font-weight: 700; }
+    .fail { color: #b8422d; font-weight: 700; }
+    a { color: #145f9e; }
+    @media (max-width: 700px) {
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Manga Origin Getter</h1>
+      <p>Entrer une URL oeuvre, suivre le traitement, puis télécharger chaque PDF de chapitre.</p>
+    </header>
+    <main>
+      <div class="row">
+        <input id="sourceUrl" placeholder="https://mangas-origines.fr/oeuvre/demon-slave/" />
+        <button id="launchBtn">Lancer</button>
+      </div>
+      <div class="status" id="status">Aucun job en cours.</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Chapitre</th>
+            <th>Etat</th>
+            <th>Images</th>
+            <th>PDF</th>
+            <th>Erreur</th>
+          </tr>
+        </thead>
+        <tbody id="chapterBody"></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script>
+    const sourceUrlInput = document.getElementById("sourceUrl");
+    const launchBtn = document.getElementById("launchBtn");
+    const statusEl = document.getElementById("status");
+    const chapterBody = document.getElementById("chapterBody");
+
+    let currentJobId = null;
+    let pollTimer = null;
+
+    launchBtn.addEventListener("click", async () => {
+      const sourceUrl = sourceUrlInput.value.trim();
+      if (!sourceUrl) {
+        statusEl.textContent = "Entrer une URL valide.";
+        return;
+      }
+
+      launchBtn.disabled = true;
+      chapterBody.innerHTML = "";
+      statusEl.textContent = "Creation du job...";
+
+      try {
+        const response = await fetch("/jobs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source_url: sourceUrl, max_concurrency: 4 })
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message);
+        }
+
+        const job = await response.json();
+        currentJobId = job.id;
+        statusEl.textContent = `Job ${job.id} cree, traitement en cours...`;
+        poll(job.id);
+      } catch (error) {
+        statusEl.textContent = `Erreur creation job: ${error}`;
+      } finally {
+        launchBtn.disabled = false;
+      }
+    });
+
+    function poll(jobId) {
+      clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        try {
+          const response = await fetch(`/jobs/${jobId}`);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const job = await response.json();
+          statusEl.innerHTML = [
+            `<div><strong>Job:</strong> ${job.id}</div>`,
+            `<div><strong>Oeuvre:</strong> ${job.work_title || "-"}</div>`,
+            `<div><strong>Etat:</strong> ${job.status}</div>`,
+            `<div><strong>Progression:</strong> ${job.completed_chapters}/${job.total_chapters}</div>`,
+            job.error ? `<div><strong>Erreur:</strong> ${job.error}</div>` : ""
+          ].join("");
+
+          chapterBody.innerHTML = "";
+          for (const chapter of job.chapter_artifacts) {
+            const row = document.createElement("tr");
+            const statusClass = chapter.status === "done" ? "ok" : chapter.status === "failed" ? "fail" : "";
+            const pdfCell = chapter.pdf_path
+              ? `<a href="/jobs/${job.id}/chapters/${chapter.slug}/pdf" target="_blank" rel="noopener">Telecharger</a>`
+              : "-";
+
+            row.innerHTML = `
+              <td>${chapter.title}</td>
+              <td class="${statusClass}">${chapter.status}</td>
+              <td>${chapter.image_count}</td>
+              <td>${pdfCell}</td>
+              <td>${chapter.error || ""}</td>
+            `;
+            chapterBody.appendChild(row);
+          }
+
+          if (["done", "failed"].includes(job.status)) {
+            clearInterval(pollTimer);
+          }
+        } catch (error) {
+          statusEl.textContent = `Erreur suivi job: ${error}`;
+          clearInterval(pollTimer);
+        }
+      }, 2500);
+    }
+  </script>
+</body>
+</html>

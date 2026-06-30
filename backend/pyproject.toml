@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "manga-origine-getteur"
+version = "0.1.0"
+description = "Web backend to fetch manga chapters and generate PDFs"
+requires-python = ">=3.9"
+dependencies = [
+  "beautifulsoup4>=4.12.3",
+  "fastapi>=0.115.0",
+  "httpx>=0.27.0",
+  "pillow>=10.4.0",
+  "python-multipart>=0.0.9",
+  "uvicorn>=0.30.0"
+]
+
+[tool.uv]
+dev-dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["app*"]
