@@ -2,6 +2,11 @@
 
 MVP backend web qui prend une URL oeuvre, découvre tous les chapitres, récupère les images de chaque chapitre, puis génère un PDF par chapitre.
 
+Domaines actuellement supportes:
+
+- https://mangas-origines.fr
+- https://hentai-origines.com
+
 ## Stack actuelle
 
 - Python 3.9+
