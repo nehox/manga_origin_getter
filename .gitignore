@@ -10,6 +10,7 @@ backend/.venv/
 
 # Local runtime data
 backend/data/jobs/
+backend/data/*.db
 
 # OS/editor
 .DS_Store

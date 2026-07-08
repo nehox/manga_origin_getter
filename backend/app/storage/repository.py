@@ -24,3 +24,11 @@ class InMemoryJobRepository:
     async def update(self, job: JobState) -> None:
         async with self._lock:
             self._jobs[job.id] = job
+
+    async def list(self) -> list[JobState]:
+        async with self._lock:
+            return [deepcopy(job) for job in self._jobs.values()]
+
+    async def clear(self) -> None:
+        async with self._lock:
+            self._jobs.clear()

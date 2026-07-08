@@ -3,25 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Manga Origin Getter</title>
+  <title>Bibliotheque - Manga Origin Getter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f4efe5;
-      --paper: #fffdf7;
       --ink: #1f2622;
       --muted: #58645d;
-      --primary: #0f766e;
-      --primary-strong: #0a5b55;
-      --hot: #cd5334;
       --line: #d9ceba;
-      --shadow: 0 30px 80px rgba(31, 38, 34, 0.14);
+      --primary: #0f766e;
+      --hot: #cd5334;
     }
-
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: "Sora", "Trebuchet MS", sans-serif;
@@ -31,417 +25,581 @@
         radial-gradient(circle at 86% 88%, #9cd9c2 0, transparent 38%),
         linear-gradient(165deg, #f7f2e9 0%, #ece5d6 100%);
       min-height: 100vh;
-      padding: 26px;
-      position: relative;
-      overflow-x: hidden;
+      padding: 22px;
     }
-
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      inset: auto;
-      width: 420px;
-      height: 420px;
-      border-radius: 999px;
-      pointer-events: none;
-      filter: blur(80px);
-      opacity: 0.45;
-      z-index: 0;
-    }
-
-    body::before {
-      top: -140px;
-      right: -80px;
-      background: #f4ae5b;
-    }
-
-    body::after {
-      bottom: -170px;
-      left: -120px;
-      background: #7ec5ad;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 1120px;
+    .wrap {
+      max-width: 1200px;
       margin: 0 auto;
-      background: linear-gradient(180deg, rgba(255, 253, 247, 0.95), rgba(255, 250, 238, 0.92));
+      background: rgba(255, 253, 247, 0.95);
       border: 1px solid rgba(217, 206, 186, 0.95);
-      border-radius: 24px;
+      border-radius: 22px;
       overflow: hidden;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-      animation: rise-in 0.55s ease-out;
+      box-shadow: 0 28px 70px rgba(31, 38, 34, 0.14);
     }
-
     header {
-      padding: 30px;
+      padding: 24px;
       background:
         linear-gradient(125deg, rgba(15, 118, 110, 0.1), rgba(205, 83, 52, 0.1)),
         linear-gradient(125deg, #f5c17a, #c2ebd3);
       border-bottom: 1px solid rgba(217, 206, 186, 0.95);
     }
-
     .tag {
       display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
       border-radius: 999px;
-      font-size: 0.75rem;
+      padding: 8px 12px;
+      font-size: 0.74rem;
       font-weight: 700;
       letter-spacing: 0.05em;
       text-transform: uppercase;
       color: #094b46;
-      background: rgba(255, 255, 255, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.75);
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.82);
     }
-
     h1 {
-      margin: 14px 0 4px;
+      margin: 14px 0 6px;
       font-family: "Libre Baskerville", Georgia, serif;
       font-size: clamp(2rem, 4vw, 2.8rem);
-      letter-spacing: 0.01em;
-      line-height: 1.15;
     }
-
-    p {
-      color: var(--muted);
-      margin: 0;
-      max-width: 66ch;
+    p { margin: 0; color: var(--muted); }
+    .links {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
-
-    main { padding: 26px; display: grid; gap: 16px; }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 10px;
-    }
-
-    input, button {
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      padding: 13px 15px;
-      font: inherit;
-    }
-
-    input {
-      background: rgba(255, 255, 255, 0.95);
-      transition: box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: rgba(15, 118, 110, 0.5);
-      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.14);
-    }
-
-    button {
-      border: none;
-      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-      color: #fff;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      min-width: 140px;
-      box-shadow: 0 10px 26px rgba(15, 118, 110, 0.25);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(15, 118, 110, 0.3);
-    }
-
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .card {
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 14px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.86);
-    }
-
-    .card .label {
-      display: block;
-      font-size: 0.75rem;
-      letter-spacing: 0.04em;
-      color: var(--muted);
+    .link {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 7px 11px;
       text-transform: uppercase;
-      margin-bottom: 5px;
-    }
-
-    .card .value {
-      font-size: 1rem;
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(9, 75, 70, 0.28);
+      color: #0a5b55;
+      background: rgba(255, 255, 255, 0.72);
+      text-decoration: none;
       font-weight: 700;
-      word-break: break-word;
     }
-
-    .status {
-      padding: 12px;
+    main {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+    }
+    .panel {
       border: 1px solid rgba(217, 206, 186, 0.9);
       border-radius: 14px;
-      background: rgba(255, 255, 255, 0.88);
-    }
-
-    .progress-track {
-      margin-top: 10px;
-      height: 10px;
-      border-radius: 99px;
-      background: #eae4d6;
+      background: rgba(255, 255, 255, 0.9);
       overflow: hidden;
     }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), #3d9a92);
-      transition: width 0.25s ease;
+    .panel h2 {
+      margin: 0;
+      padding: 11px 12px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #4e5e57;
+      background: #f5ead7;
+      border-bottom: 1px solid rgba(217, 206, 186, 0.75);
     }
-
-    .status strong { color: var(--hot); }
-
+    .body { padding: 12px; display: grid; gap: 9px; }
+    .row { display: grid; grid-template-columns: 1fr 140px 160px; gap: 8px; }
+    .row2 { display: grid; grid-template-columns: 1fr 130px 150px auto; gap: 8px; }
+    .checkline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    input, button {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      font: inherit;
+    }
+    input { background: rgba(255, 255, 255, 0.95); }
+    button {
+      border: none;
+      background: linear-gradient(135deg, #0f766e, #0a5b55);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary { background: linear-gradient(135deg, #4f8e88, #437a74); }
+    button.warn { background: linear-gradient(135deg, #b85b47, #9f3e2e); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+    .card {
+      border: 1px solid rgba(217, 206, 186, 0.9);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.86);
+      padding: 10px;
+    }
+    .label { display: block; font-size: 0.72rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; }
+    .value { font-size: 0.95rem; font-weight: 700; margin-top: 5px; word-break: break-word; }
+    .msg { font-size: 0.88rem; color: var(--muted); min-height: 1.2em; }
     table {
       width: 100%;
       border-collapse: collapse;
       background: rgba(255, 255, 255, 0.92);
-      border-radius: 14px;
-      overflow: hidden;
       border: 1px solid rgba(217, 206, 186, 0.9);
+      border-radius: 12px;
+      overflow: hidden;
     }
-
     th, td {
       text-align: left;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(217, 206, 186, 0.75);
-      font-size: 0.94rem;
+      padding: 9px 10px;
+      border-bottom: 1px solid rgba(217, 206, 186, 0.7);
+      font-size: 0.9rem;
       vertical-align: middle;
     }
-
     th {
-      background: #f5ead7;
-      font-size: 0.78rem;
-      letter-spacing: 0.05em;
+      font-size: 0.76rem;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: #4e5e57;
+      background: #f5ead7;
     }
-
     tr:last-child td { border-bottom: none; }
-
     .chip {
       display: inline-flex;
-      align-items: center;
       border-radius: 999px;
-      padding: 5px 10px;
+      padding: 4px 8px;
+      font-size: 0.74rem;
       font-weight: 700;
-      font-size: 0.78rem;
-      letter-spacing: 0.03em;
       text-transform: uppercase;
-      border: 1px solid;
+      letter-spacing: 0.04em;
     }
-
-    .chip.done {
-      color: #0d6a53;
-      background: #e2f6ee;
-      border-color: #bfead9;
+    .chip.ok { background: #e2f6ee; color: #0d6a53; }
+    .chip.error { background: #fbe8e2; color: #9f3e2e; }
+    .small-list {
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid rgba(217, 206, 186, 0.75);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      display: grid;
+      gap: 6px;
     }
-
-    .chip.failed {
-      color: #9f3e2e;
-      background: #fbe8e2;
-      border-color: #f2c7bb;
+    .small-item { font-size: 0.85rem; color: var(--ink); }
+    @media (max-width: 1020px) {
+      .grid { grid-template-columns: 1fr; }
+      .row, .row2 { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
-
-    .chip.pending,
-    .chip.downloading,
-    .chip.assembling,
-    .chip.discovering {
-      color: #6a613e;
-      background: #fbf2d9;
-      border-color: #eedfb6;
-    }
-
-    a { color: #155f9d; font-weight: 600; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    @keyframes rise-in {
-      from { transform: translateY(10px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    @media (max-width: 980px) {
-      .row { grid-template-columns: 1fr; }
-      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      button { width: 100%; }
-    }
-
     @media (max-width: 640px) {
-      body { padding: 14px; }
-      header, main { padding: 16px; }
-      .cards { grid-template-columns: 1fr; }
+      body { padding: 10px; }
+      .stats { grid-template-columns: 1fr; }
       table { display: block; overflow-x: auto; white-space: nowrap; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <header>
-      <span class="tag">Manga Automation Studio</span>
-      <h1>Manga Origin Getter</h1>
-      <p>Colle une URL d'oeuvre, choisis un dossier de sortie, puis suis la fabrication automatique des PDF chapitre par chapitre.</p>
+      <span class="tag">Home: Bibliotheque</span>
+      <h1>Bibliotheque Manga</h1>
+      <p>Indexe tes mangas deja telecharges, detecte les chapitres manquants et automatise le scan de nouvelles sorties.</p>
+      <div class="links">
+        <a class="link" href="/downloads.html">Ajouter / telecharger mangas</a>
+        <a class="link" href="/settings.html">Settings systeme</a>
+      </div>
     </header>
+
     <main>
-      <div class="row">
-        <input id="sourceUrl" placeholder="https://mangas-origines.fr/oeuvre/demon-slave/" />
-        <input id="outputDir" placeholder="Chemin de sortie PDF (ex: /Users/toi/Downloads/manga-pdf)" />
-        <button id="launchBtn">Lancer le job</button>
-      </div>
+      <section class="grid">
+        <article class="panel">
+          <h2>Path Bibliotheque</h2>
+          <div class="body">
+            <div class="row">
+              <input id="rootPath" placeholder="/Users/toi/Downloads/manga-library" />
+              <button id="saveRootBtn">Sauver path</button>
+              <button id="scanAllBtn" class="secondary">Scanner tout</button>
+            </div>
+            <div class="msg" id="rootMsg"></div>
+          </div>
+        </article>
 
-      <div class="cards">
-        <div class="card"><span class="label">Job</span><span class="value" id="jobCard">-</span></div>
-        <div class="card"><span class="label">Oeuvre</span><span class="value" id="workCard">-</span></div>
-        <div class="card"><span class="label">Etat</span><span class="value" id="stateCard">-</span></div>
-        <div class="card"><span class="label">Sortie PDF</span><span class="value" id="dirCard">-</span></div>
-      </div>
+        <article class="panel">
+          <h2>Ajouter Manga Suivi</h2>
+          <div class="body">
+            <div class="row2">
+              <input id="sourceUrl" placeholder="https://.../oeuvre/... ou /manga/..." />
+              <input id="interval" type="number" min="5" value="60" placeholder="minutes" />
+              <input id="localSubdir" placeholder="sous-dossier local (optionnel)" />
+              <button id="addTrackBtn">Ajouter</button>
+            </div>
+            <label class="checkline">
+              <input id="autoDownloadMissing" type="checkbox" />
+              Auto-telecharger les chapitres manquants pendant les scans cron
+            </label>
+            <div class="msg" id="addMsg"></div>
+          </div>
+        </article>
+      </section>
 
-      <div class="status" id="status">
-        <span id="statusText">Aucun job en cours.</span>
-        <div class="progress-track">
-          <div class="progress-fill" id="progressFill"></div>
+      <section class="stats">
+        <div class="card"><span class="label">Root path</span><span class="value" id="rootValue">-</span></div>
+        <div class="card"><span class="label">Mangas suivis</span><span class="value" id="trackedCount">0</span></div>
+        <div class="card"><span class="label">Dirs non lies</span><span class="value" id="unlinkedCount">0</span></div>
+        <div class="card"><span class="label">Selection</span><span class="value" id="selectedTitle">-</span></div>
+      </section>
+
+      <section class="panel">
+        <h2>Mangas suivis</h2>
+        <div class="body">
+          <table>
+            <thead>
+              <tr>
+                <th>Titre</th>
+                <th>Present</th>
+                <th>Manquant</th>
+                <th>Gaps</th>
+                <th>Auto DL</th>
+                <th>Scan</th>
+                <th>Prochain</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="mangaBody"></tbody>
+          </table>
+          <div class="msg" id="tableMsg"></div>
         </div>
-      </div>
+      </section>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Chapitre</th>
-            <th>Etat</th>
-            <th>Images</th>
-            <th>PDF</th>
-            <th>Erreur</th>
-          </tr>
-        </thead>
-        <tbody id="chapterBody"></tbody>
-      </table>
+      <section class="grid">
+        <article class="panel">
+          <h2>Chapitres manquants (selection)</h2>
+          <div class="body">
+            <div id="missingList" class="small-list"></div>
+          </div>
+        </article>
+        <article class="panel">
+          <h2>Dossiers non lies</h2>
+          <div class="body">
+            <div id="unlinkedList" class="small-list"></div>
+          </div>
+        </article>
+      </section>
     </main>
   </div>
 
   <script>
+    const rootPathInput = document.getElementById("rootPath");
     const sourceUrlInput = document.getElementById("sourceUrl");
-    const outputDirInput = document.getElementById("outputDir");
-    const launchBtn = document.getElementById("launchBtn");
-    const statusEl = document.getElementById("status");
-    const statusText = document.getElementById("statusText");
-    const chapterBody = document.getElementById("chapterBody");
-    const progressFill = document.getElementById("progressFill");
-    const jobCard = document.getElementById("jobCard");
-    const workCard = document.getElementById("workCard");
-    const stateCard = document.getElementById("stateCard");
-    const dirCard = document.getElementById("dirCard");
+    const intervalInput = document.getElementById("interval");
+    const localSubdirInput = document.getElementById("localSubdir");
+    const autoDownloadMissingInput = document.getElementById("autoDownloadMissing");
 
-    let currentJobId = null;
-    let pollTimer = null;
+    const rootMsg = document.getElementById("rootMsg");
+    const addMsg = document.getElementById("addMsg");
+    const tableMsg = document.getElementById("tableMsg");
 
-    launchBtn.addEventListener("click", async () => {
+    const rootValue = document.getElementById("rootValue");
+    const trackedCount = document.getElementById("trackedCount");
+    const unlinkedCount = document.getElementById("unlinkedCount");
+    const selectedTitle = document.getElementById("selectedTitle");
+
+    const mangaBody = document.getElementById("mangaBody");
+    const missingList = document.getElementById("missingList");
+    const unlinkedList = document.getElementById("unlinkedList");
+
+    const saveRootBtn = document.getElementById("saveRootBtn");
+    const addTrackBtn = document.getElementById("addTrackBtn");
+    const scanAllBtn = document.getElementById("scanAllBtn");
+
+    let overview = null;
+    let selectedMangaId = null;
+
+    saveRootBtn.addEventListener("click", async () => {
+      const path = rootPathInput.value.trim();
+      if (!path) {
+        rootMsg.textContent = "Entre un path valide.";
+        return;
+      }
+      saveRootBtn.disabled = true;
+      try {
+        const response = await fetch("/library/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ library_root_path: path })
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+        rootMsg.textContent = "Path bibliotheque mis a jour.";
+        await refreshOverview();
+      } catch (error) {
+        rootMsg.textContent = `Erreur path: ${error}`;
+      } finally {
+        saveRootBtn.disabled = false;
+      }
+    });
+
+    addTrackBtn.addEventListener("click", async () => {
       const sourceUrl = sourceUrlInput.value.trim();
-      const outputDir = outputDirInput.value.trim();
+      const interval = Number(intervalInput.value || "60");
+      const localSubdir = localSubdirInput.value.trim();
+      const autoDownloadMissing = autoDownloadMissingInput.checked;
       if (!sourceUrl) {
-        statusEl.textContent = "Entrer une URL valide.";
+        addMsg.textContent = "URL oeuvre requise.";
         return;
       }
 
-      launchBtn.disabled = true;
-      chapterBody.innerHTML = "";
-      statusText.textContent = "Creation du job...";
-      progressFill.style.width = "0%";
-
+      addTrackBtn.disabled = true;
       try {
-        const response = await fetch("/jobs", {
+        const response = await fetch("/library/mangas", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             source_url: sourceUrl,
-            max_concurrency: 4,
-            output_dir: outputDir || null
+            scan_interval_minutes: interval,
+            local_subdir: localSubdir || null,
+            auto_download_missing: autoDownloadMissing,
           })
         });
-
         if (!response.ok) {
-          const message = await response.text();
-          throw new Error(message);
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
         }
-
-        const job = await response.json();
-        currentJobId = job.id;
-        jobCard.textContent = job.id;
-        workCard.textContent = job.work_title || "-";
-        stateCard.textContent = job.status;
-        dirCard.textContent = job.output_dir || "-";
-        statusText.textContent = `Job ${job.id} cree, traitement en cours...`;
-        poll(job.id);
+        addMsg.textContent = "Manga ajoute et scanne.";
+        sourceUrlInput.value = "";
+        localSubdirInput.value = "";
+        autoDownloadMissingInput.checked = false;
+        await refreshOverview();
       } catch (error) {
-        statusText.textContent = `Erreur creation job: ${error}`;
+        addMsg.textContent = `Erreur ajout: ${error}`;
       } finally {
-        launchBtn.disabled = false;
+        addTrackBtn.disabled = false;
       }
     });
 
-    function poll(jobId) {
-      clearInterval(pollTimer);
-      pollTimer = setInterval(async () => {
-        try {
-          const response = await fetch(`/jobs/${jobId}`);
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-
-          const job = await response.json();
-          const ratio = job.total_chapters > 0 ? (job.completed_chapters / job.total_chapters) * 100 : 0;
-          progressFill.style.width = `${Math.min(100, Math.max(0, ratio))}%`;
-
-          jobCard.textContent = job.id;
-          workCard.textContent = job.work_title || "-";
-          stateCard.textContent = job.status;
-          dirCard.textContent = job.output_dir || "-";
-
-          const errorText = job.error ? ` - Erreur: ${job.error}` : "";
-          statusText.textContent = `Progression: ${job.completed_chapters}/${job.total_chapters}${errorText}`;
-
-          chapterBody.innerHTML = "";
-          for (const chapter of job.chapter_artifacts) {
-            const row = document.createElement("tr");
-            const statusClass = chapter.status === "failed" ? "failed" : chapter.status;
-            const pdfCell = chapter.pdf_path
-              ? `<a href="/jobs/${job.id}/chapters/${chapter.slug}/pdf" target="_blank" rel="noopener">Telecharger</a>`
-              : "-";
-
-            row.innerHTML = `
-              <td>${escapeHtml(chapter.title)}</td>
-              <td><span class="chip ${statusClass}">${escapeHtml(chapter.status)}</span></td>
-              <td>${chapter.image_count}</td>
-              <td>${pdfCell}</td>
-              <td>${escapeHtml(chapter.error || "")}</td>
-            `;
-            chapterBody.appendChild(row);
-          }
-
-          if (["done", "failed"].includes(job.status)) {
-            clearInterval(pollTimer);
-          }
-        } catch (error) {
-          statusText.textContent = `Erreur suivi job: ${error}`;
-          clearInterval(pollTimer);
+    scanAllBtn.addEventListener("click", async () => {
+      scanAllBtn.disabled = true;
+      tableMsg.textContent = "Scan global en cours...";
+      try {
+        const response = await fetch("/library/scan-all", { method: "POST" });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
         }
-      }, 2500);
+        const payload = await response.json();
+        tableMsg.textContent = `Scan global termine. Scannes: ${payload.scanned}, erreurs: ${payload.errors.length}.`;
+        await refreshOverview();
+      } catch (error) {
+        tableMsg.textContent = `Erreur scan global: ${error}`;
+      } finally {
+        scanAllBtn.disabled = false;
+      }
+    });
+
+    async function scanOne(mangaId) {
+      tableMsg.textContent = "Scan manga en cours...";
+      const response = await fetch(`/library/mangas/${mangaId}/scan`, { method: "POST" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.detail || `HTTP ${response.status}`);
+      }
+      await refreshOverview();
+      tableMsg.textContent = "Scan manga termine.";
+    }
+
+    function renderOverview() {
+      if (!overview) return;
+
+      rootValue.textContent = overview.library_root_path || "-";
+      rootPathInput.value = overview.library_root_path || rootPathInput.value;
+      trackedCount.textContent = String(overview.mangas.length);
+      unlinkedCount.textContent = String(overview.unlinked_dirs.length);
+
+      mangaBody.innerHTML = "";
+      if (!overview.mangas.length) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td colspan="8">Aucun manga suivi. Ajoute une URL pour commencer.</td>`;
+        mangaBody.appendChild(row);
+      }
+
+      for (const manga of overview.mangas) {
+        const row = document.createElement("tr");
+        const statusChip = manga.last_scan_status === "error"
+          ? `<span class="chip error">error</span>`
+          : `<span class="chip ok">ok</span>`;
+        const autoChip = manga.auto_download_missing
+          ? `<span class="chip ok">on</span>`
+          : `<span class="chip error">off</span>`;
+        const gapsText = manga.numeric_gaps && manga.numeric_gaps.length ? manga.numeric_gaps.slice(0, 8).join(", ") : "-";
+
+        row.innerHTML = `
+          <td>${escapeHtml(manga.title)}</td>
+          <td>${manga.present_total}/${manga.remote_total}</td>
+          <td>${manga.missing_total}</td>
+          <td>${escapeHtml(gapsText)}</td>
+          <td>${autoChip}</td>
+          <td>${statusChip}</td>
+          <td>${escapeHtml(manga.next_scan_at || "-")}</td>
+          <td>
+            <button class="secondary" data-action="scan" data-id="${manga.id}">Scanner</button>
+            <button class="secondary" data-action="download-missing" data-id="${manga.id}">Telecharger manquants</button>
+            <button class="secondary" data-action="toggle-auto" data-id="${manga.id}">${manga.auto_download_missing ? "Auto OFF" : "Auto ON"}</button>
+            <button class="warn" data-action="delete" data-id="${manga.id}">Supprimer</button>
+            <button data-action="select" data-id="${manga.id}">Details</button>
+          </td>
+        `;
+        mangaBody.appendChild(row);
+      }
+
+      mangaBody.querySelectorAll("button[data-action='scan']").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await scanOne(Number(btn.dataset.id));
+          } catch (error) {
+            tableMsg.textContent = `Erreur scan: ${error}`;
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      mangaBody.querySelectorAll("button[data-action='select']").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selectedMangaId = Number(btn.dataset.id);
+          renderSelected();
+        });
+      });
+
+      mangaBody.querySelectorAll("button[data-action='download-missing']").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const mangaId = Number(btn.dataset.id);
+          btn.disabled = true;
+          tableMsg.textContent = "Telechargement des chapitres manquants en cours...";
+          try {
+            const response = await fetch(`/library/mangas/${mangaId}/download-missing`, { method: "POST" });
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              throw new Error(payload.detail || `HTTP ${response.status}`);
+            }
+            const payload = await response.json();
+            tableMsg.textContent = `Telechargement termine. Nouveaux chapitres telecharges: ${payload.downloaded_count || 0}.`;
+            await refreshOverview();
+          } catch (error) {
+            tableMsg.textContent = `Erreur telechargement manquants: ${error}`;
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      mangaBody.querySelectorAll("button[data-action='toggle-auto']").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const mangaId = Number(btn.dataset.id);
+          const manga = overview.mangas.find((item) => item.id === mangaId);
+          if (!manga) return;
+          btn.disabled = true;
+          try {
+            const response = await fetch(`/library/mangas/${mangaId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ auto_download_missing: !manga.auto_download_missing })
+            });
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              throw new Error(payload.detail || `HTTP ${response.status}`);
+            }
+            tableMsg.textContent = "Option auto-telechargement mise a jour.";
+            await refreshOverview();
+          } catch (error) {
+            tableMsg.textContent = `Erreur update auto DL: ${error}`;
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      mangaBody.querySelectorAll("button[data-action='delete']").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const mangaId = Number(btn.dataset.id);
+          const ok = confirm("Supprimer ce manga du suivi ?");
+          if (!ok) return;
+          btn.disabled = true;
+          try {
+            const response = await fetch(`/library/mangas/${mangaId}`, { method: "DELETE" });
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              throw new Error(payload.detail || `HTTP ${response.status}`);
+            }
+            if (selectedMangaId === mangaId) {
+              selectedMangaId = null;
+            }
+            tableMsg.textContent = "Manga supprime du suivi.";
+            await refreshOverview();
+          } catch (error) {
+            tableMsg.textContent = `Erreur suppression: ${error}`;
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+      renderUnlinked();
+      renderSelected();
+    }
+
+    function renderUnlinked() {
+      unlinkedList.innerHTML = "";
+      if (!overview || !overview.unlinked_dirs.length) {
+        unlinkedList.innerHTML = '<div class="small-item">Aucun dossier non lie.</div>';
+        return;
+      }
+      for (const item of overview.unlinked_dirs) {
+        const div = document.createElement("div");
+        div.className = "small-item";
+        div.textContent = `${item.local_subdir} (${item.pdf_count} PDFs)`;
+        unlinkedList.appendChild(div);
+      }
+    }
+
+    function renderSelected() {
+      missingList.innerHTML = "";
+      if (!overview || !overview.mangas.length) {
+        selectedTitle.textContent = "-";
+        missingList.innerHTML = '<div class="small-item">Pas de manga selectionne.</div>';
+        return;
+      }
+
+      const manga = overview.mangas.find((x) => x.id === selectedMangaId) || overview.mangas[0];
+      selectedMangaId = manga.id;
+      selectedTitle.textContent = manga.title;
+
+      if (!manga.missing_chapters.length) {
+        missingList.innerHTML = '<div class="small-item">Aucun chapitre manquant.</div>';
+        return;
+      }
+
+      for (const chapter of manga.missing_chapters) {
+        const div = document.createElement("div");
+        div.className = "small-item";
+        div.textContent = `${chapter.chapter_title} - ${chapter.chapter_url}`;
+        missingList.appendChild(div);
+      }
+    }
+
+    async function refreshOverview() {
+      const response = await fetch("/library/overview");
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.detail || `HTTP ${response.status}`);
+      }
+      overview = await response.json();
+      renderOverview();
     }
 
     function escapeHtml(value) {
@@ -452,6 +610,13 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
+
+    refreshOverview().catch((error) => {
+      tableMsg.textContent = `Erreur initiale: ${error}`;
+    });
+    setInterval(() => {
+      refreshOverview().catch(() => null);
+    }, 30000);
   </script>
 </body>
 </html>

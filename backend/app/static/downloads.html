@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manga Origin Getter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4efe5;
+      --paper: #fffdf7;
+      --ink: #1f2622;
+      --muted: #58645d;
+      --primary: #0f766e;
+      --primary-strong: #0a5b55;
+      --hot: #cd5334;
+      --line: #d9ceba;
+      --shadow: 0 30px 80px rgba(31, 38, 34, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Sora", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 12%, #f7c883 0, transparent 34%),
+        radial-gradient(circle at 86% 88%, #9cd9c2 0, transparent 38%),
+        linear-gradient(165deg, #f7f2e9 0%, #ece5d6 100%);
+      min-height: 100vh;
+      padding: 26px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 420px;
+      height: 420px;
+      border-radius: 999px;
+      pointer-events: none;
+      filter: blur(80px);
+      opacity: 0.45;
+      z-index: 0;
+    }
+
+    body::before {
+      top: -140px;
+      right: -80px;
+      background: #f4ae5b;
+    }
+
+    body::after {
+      bottom: -170px;
+      left: -120px;
+      background: #7ec5ad;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, rgba(255, 253, 247, 0.95), rgba(255, 250, 238, 0.92));
+      border: 1px solid rgba(217, 206, 186, 0.95);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      animation: rise-in 0.55s ease-out;
+    }
+
+    header {
+      padding: 30px;
+      background:
+        linear-gradient(125deg, rgba(15, 118, 110, 0.1), rgba(205, 83, 52, 0.1)),
+        linear-gradient(125deg, #f5c17a, #c2ebd3);
+      border-bottom: 1px solid rgba(217, 206, 186, 0.95);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #094b46;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+    }
+
+    h1 {
+      margin: 14px 0 4px;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      letter-spacing: 0.01em;
+      line-height: 1.15;
+    }
+
+    .top-links {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .top-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(9, 75, 70, 0.25);
+      color: #0a5b55;
+      background: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    p {
+      color: var(--muted);
+      margin: 0;
+      max-width: 66ch;
+    }
+
+    main { padding: 26px; display: grid; gap: 16px; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+    }
+
+    input, button {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      padding: 13px 15px;
+      font: inherit;
+    }
+
+    input {
+      background: rgba(255, 255, 255, 0.95);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: rgba(15, 118, 110, 0.5);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.14);
+    }
+
+    button {
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      min-width: 140px;
+      box-shadow: 0 10px 26px rgba(15, 118, 110, 0.25);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(15, 118, 110, 0.3);
+    }
+
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid rgba(217, 206, 186, 0.9);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .card .label {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .card .value {
+      font-size: 1rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .status {
+      padding: 12px;
+      border: 1px solid rgba(217, 206, 186, 0.9);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .progress-track {
+      margin-top: 10px;
+      height: 10px;
+      border-radius: 99px;
+      background: #eae4d6;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), #3d9a92);
+      transition: width 0.25s ease;
+    }
+
+    .status strong { color: var(--hot); }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid rgba(217, 206, 186, 0.9);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      overflow: hidden;
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 11px 12px;
+      font-size: 0.82rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #4e5e57;
+      background: #f5ead7;
+      border-bottom: 1px solid rgba(217, 206, 186, 0.75);
+    }
+
+    .panel .panel-body {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .ghost-btn {
+      margin-top: 10px;
+      width: auto;
+      min-width: 180px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(15, 118, 110, 0.35);
+      background: rgba(15, 118, 110, 0.09);
+      color: #0a5b55;
+      font-size: 0.86rem;
+      font-weight: 700;
+      box-shadow: none;
+      transition: background 0.2s ease;
+    }
+
+    .ghost-btn:hover {
+      background: rgba(15, 118, 110, 0.16);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .ghost-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .queue-list {
+      max-height: 250px;
+      overflow: auto;
+      display: grid;
+    }
+
+    .queue-item {
+      border: none;
+      border-bottom: 1px solid rgba(217, 206, 186, 0.7);
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+      width: 100%;
+      padding: 10px 12px;
+      min-width: 0;
+      box-shadow: none;
+      cursor: pointer;
+      display: grid;
+      gap: 4px;
+    }
+
+    .queue-item:hover { background: rgba(15, 118, 110, 0.07); transform: none; }
+
+    .queue-item.active {
+      background: rgba(15, 118, 110, 0.12);
+      outline: 1px solid rgba(15, 118, 110, 0.25);
+    }
+
+    .queue-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .queue-meta {
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(217, 206, 186, 0.9);
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(217, 206, 186, 0.75);
+      font-size: 0.94rem;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f5ead7;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #4e5e57;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      border: 1px solid;
+    }
+
+    .chip.done {
+      color: #0d6a53;
+      background: #e2f6ee;
+      border-color: #bfead9;
+    }
+
+    .chip.failed {
+      color: #9f3e2e;
+      background: #fbe8e2;
+      border-color: #f2c7bb;
+    }
+
+    .chip.pending,
+    .chip.downloading,
+    .chip.assembling,
+    .chip.discovering {
+      color: #6a613e;
+      background: #fbf2d9;
+      border-color: #eedfb6;
+    }
+
+    a { color: #155f9d; font-weight: 600; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    @keyframes rise-in {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 980px) {
+      .row { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .split { grid-template-columns: 1fr; }
+      button { width: 100%; }
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      header, main { padding: 16px; }
+      .cards { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="tag">Manga Automation Studio</span>
+      <h1>Manga Origin Getter</h1>
+      <p>Colle une URL d'oeuvre, choisis un dossier de sortie, puis suis la fabrication automatique des PDF chapitre par chapitre.</p>
+      <div class="top-links">
+        <a class="top-link" href="/">Bibliotheque</a>
+        <a class="top-link" href="/settings.html">Settings &amp; purge</a>
+      </div>
+    </header>
+    <main>
+      <div class="row">
+        <input id="sourceUrl" placeholder="https://mangas-origines.fr/oeuvre/demon-slave/" />
+        <input id="outputDir" placeholder="Chemin de sortie PDF (ex: /Users/toi/Downloads/manga-pdf)" />
+        <button id="launchBtn">Lancer le job</button>
+      </div>
+
+      <div class="cards">
+        <div class="card"><span class="label">Job</span><span class="value" id="jobCard">-</span></div>
+        <div class="card"><span class="label">Oeuvre</span><span class="value" id="workCard">-</span></div>
+        <div class="card"><span class="label">Etat</span><span class="value" id="stateCard">-</span></div>
+        <div class="card"><span class="label">Sortie PDF</span><span class="value" id="dirCard">-</span></div>
+      </div>
+
+      <div class="status" id="status">
+        <span id="statusText">Aucun job en cours.</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="split">
+        <section class="panel">
+          <h2>File de fond</h2>
+          <div class="queue-list" id="queueList"></div>
+        </section>
+        <section class="panel">
+          <h2>Info</h2>
+          <div class="panel-body">
+            Tu peux lancer plusieurs jobs d'affilee. Ils partent en background et sont traites automatiquement.
+            <br />
+            <button id="retryFailedBtn" class="ghost-btn" type="button" disabled>Relancer les chapitres failed</button>
+          </div>
+        </section>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Chapitre</th>
+            <th>Etat</th>
+            <th>Images</th>
+            <th>PDF</th>
+            <th>Erreur</th>
+          </tr>
+        </thead>
+        <tbody id="chapterBody"></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script>
+    const sourceUrlInput = document.getElementById("sourceUrl");
+    const outputDirInput = document.getElementById("outputDir");
+    const launchBtn = document.getElementById("launchBtn");
+    const statusText = document.getElementById("statusText");
+    const chapterBody = document.getElementById("chapterBody");
+    const progressFill = document.getElementById("progressFill");
+    const jobCard = document.getElementById("jobCard");
+    const workCard = document.getElementById("workCard");
+    const stateCard = document.getElementById("stateCard");
+    const dirCard = document.getElementById("dirCard");
+    const queueList = document.getElementById("queueList");
+    const retryFailedBtn = document.getElementById("retryFailedBtn");
+
+    let currentJobId = null;
+    let queueTimer = null;
+    let detailTimer = null;
+
+    launchBtn.addEventListener("click", async () => {
+      const sourceUrl = sourceUrlInput.value.trim();
+      const outputDir = outputDirInput.value.trim();
+      if (!sourceUrl) {
+        statusText.textContent = "Entrer une URL valide.";
+        return;
+      }
+
+      launchBtn.disabled = true;
+      statusText.textContent = "Creation du job...";
+
+      try {
+        const response = await fetch("/jobs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source_url: sourceUrl,
+            max_concurrency: 4,
+            output_dir: outputDir || null
+          })
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message);
+        }
+
+        const job = await response.json();
+        currentJobId = job.id;
+        statusText.textContent = `Job ${job.id} ajoute a la file de fond.`;
+        await refreshQueue();
+        startDetailPoll(job.id);
+      } catch (error) {
+        statusText.textContent = `Erreur creation job: ${error}`;
+      } finally {
+        launchBtn.disabled = false;
+      }
+    });
+
+    retryFailedBtn.addEventListener("click", async () => {
+      if (!currentJobId) {
+        statusText.textContent = "Selectionne un job d'abord.";
+        return;
+      }
+
+      retryFailedBtn.disabled = true;
+      try {
+        const response = await fetch(`/jobs/${currentJobId}/retry-failed`, {
+          method: "POST"
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          const detail = payload && payload.detail ? payload.detail : `HTTP ${response.status}`;
+          throw new Error(detail);
+        }
+
+        statusText.textContent = "Relance des chapitres failed declenchee.";
+        startDetailPoll(currentJobId);
+        await refreshQueue();
+      } catch (error) {
+        statusText.textContent = `Erreur relance failed: ${error}`;
+      }
+    });
+
+    async function refreshQueue() {
+      const response = await fetch("/jobs");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const jobs = await response.json();
+      queueList.innerHTML = "";
+
+      if (!jobs.length) {
+        const empty = document.createElement("div");
+        empty.className = "queue-meta";
+        empty.style.padding = "10px 12px";
+        empty.textContent = "Aucun job encore.";
+        queueList.appendChild(empty);
+        return;
+      }
+
+      if (!currentJobId) {
+        currentJobId = jobs[0].id;
+      }
+
+      for (const job of jobs) {
+        const item = document.createElement("button");
+        item.className = `queue-item${job.id === currentJobId ? " active" : ""}`;
+        item.type = "button";
+        item.innerHTML = `
+          <span class="queue-title">${escapeHtml(job.work_title || job.source_url)}</span>
+          <span class="queue-meta">${escapeHtml(job.id)} - ${escapeHtml(job.status)} - ${job.completed_chapters}/${job.total_chapters || "?"}</span>
+        `;
+        item.addEventListener("click", () => {
+          currentJobId = job.id;
+          startDetailPoll(job.id);
+          refreshQueue().catch(() => null);
+        });
+        queueList.appendChild(item);
+      }
+    }
+
+    function startQueuePoll() {
+      clearInterval(queueTimer);
+      queueTimer = setInterval(async () => {
+        try {
+          await refreshQueue();
+        } catch (error) {
+          statusText.textContent = `Erreur file de fond: ${error}`;
+        }
+      }, 2500);
+    }
+
+    function startDetailPoll(jobId) {
+      clearInterval(detailTimer);
+      chapterBody.innerHTML = "";
+      progressFill.style.width = "0%";
+      detailTimer = setInterval(async () => {
+        try {
+          const response = await fetch(`/jobs/${jobId}`);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const job = await response.json();
+          const ratio = job.total_chapters > 0 ? (job.completed_chapters / job.total_chapters) * 100 : 0;
+          progressFill.style.width = `${Math.min(100, Math.max(0, ratio))}%`;
+
+          jobCard.textContent = job.id;
+          workCard.textContent = job.work_title || "-";
+          stateCard.textContent = job.status;
+          dirCard.textContent = job.output_dir || "-";
+
+          const errorText = job.error ? ` - Erreur: ${job.error}` : "";
+          statusText.textContent = `Progression: ${job.completed_chapters}/${job.total_chapters}${errorText}`;
+
+          const failedCount = job.chapter_artifacts.filter((chapter) => chapter.status === "failed").length;
+          retryFailedBtn.disabled = failedCount === 0 || ["discovering", "downloading", "assembling"].includes(job.status);
+
+          chapterBody.innerHTML = "";
+          for (const chapter of job.chapter_artifacts) {
+            const row = document.createElement("tr");
+            const statusClass = chapter.status === "failed" ? "failed" : chapter.status;
+            const pdfCell = chapter.pdf_path
+              ? `<a href="/jobs/${job.id}/chapters/${chapter.slug}/pdf" target="_blank" rel="noopener">Telecharger</a>`
+              : "-";
+
+            row.innerHTML = `
+              <td>${escapeHtml(chapter.title)}</td>
+              <td><span class="chip ${statusClass}">${escapeHtml(chapter.status)}</span></td>
+              <td>${chapter.image_count}</td>
+              <td>${pdfCell}</td>
+              <td>${escapeHtml(chapter.error || "")}</td>
+            `;
+            chapterBody.appendChild(row);
+          }
+
+          await refreshQueue();
+
+          if (["done", "failed"].includes(job.status)) {
+            clearInterval(detailTimer);
+          }
+        } catch (error) {
+          statusText.textContent = `Erreur suivi job: ${error}`;
+          retryFailedBtn.disabled = true;
+          clearInterval(detailTimer);
+        }
+      }, 2500);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    startQueuePoll();
+    refreshQueue().catch(() => null);
+  </script>
+</body>
+</html>

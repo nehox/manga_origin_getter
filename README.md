@@ -29,6 +29,15 @@ Le script:
 - installe le projet en editable
 - lance uvicorn
 
+Les recuperations tournent en background: tu peux lancer plusieurs jobs sans attendre la fin du precedent.
+
+Nombre de jobs traites en parallele (par defaut 2):
+
+```bash
+export BACKGROUND_JOB_WORKERS=3
+./start-stack.sh
+```
+
 Options utiles:
 
 ```bash
@@ -60,7 +69,8 @@ pip install .
 
 Ouvrir ensuite:
 
-- http://127.0.0.1:8000/
+- http://127.0.0.1:8000/ (home Bibliotheque)
+- http://127.0.0.1:8000/downloads.html (page telechargements)
 
 ## Acces source protege (Cloudflare)
 
@@ -77,8 +87,42 @@ Puis relancer le serveur.
 
 - GET /healthz
 - POST /jobs
+- GET /jobs
 - GET /jobs/{job_id}
+- POST /jobs/{job_id}/retry-failed
 - GET /jobs/{job_id}/chapters/{chapter_slug}/pdf
+- GET /settings/storage
+- POST /settings/purge
+- GET /library/overview
+- GET /library/mangas/{manga_id}
+- POST /library/settings
+- POST /library/mangas
+- PATCH /library/mangas/{manga_id}
+- POST /library/mangas/{manga_id}/scan
+- POST /library/scan-all
+
+Le bouton "Relancer les chapitres failed" dans l'interface relance uniquement les chapitres en echec du job selectionne.
+
+Page settings:
+
+- /settings.html
+
+Page bibliotheque (nouvelle home):
+
+- /
+
+Page telechargements (ancienne home):
+
+- /downloads.html
+
+Cette page permet de visualiser les stats de stockage et de purger les donnees locales de l'application.
+
+Bibliotheque:
+
+- path global unique pour indexer les mangas deja telecharges
+- memorisation des URLs oeuvre suivies
+- detection chapitres presents/manquants et gaps numeriques
+- auto-scan planifie par manga via `scan_interval_minutes`
 
 ### POST /jobs exemple
 

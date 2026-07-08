@@ -45,6 +45,7 @@ class JobState(BaseModel):
     work_title: Optional[str] = None
     total_chapters: int = 0
     completed_chapters: int = 0
+    max_concurrency: int = 4
     output_dir: Optional[str] = None
     error: Optional[str] = None
     chapter_artifacts: list[ChapterArtifact] = Field(default_factory=list)
@@ -65,3 +66,19 @@ class JobPaths(BaseModel):
     base_dir: Path
     images_dir: Path
     pdf_dir: Path
+
+
+class LibrarySettingsRequest(BaseModel):
+    library_root_path: str
+
+
+class LibraryMangaCreateRequest(BaseModel):
+    source_url: HttpUrl
+    scan_interval_minutes: int = Field(default=60, ge=5, le=10080)
+    local_subdir: Optional[str] = None
+    auto_download_missing: bool = False
+
+
+class LibraryMangaUpdateRequest(BaseModel):
+    scan_interval_minutes: Optional[int] = Field(default=None, ge=5, le=10080)
+    auto_download_missing: Optional[bool] = None

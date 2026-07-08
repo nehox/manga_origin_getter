@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings - Manga Origin Getter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4efe5;
+      --ink: #1f2622;
+      --muted: #58645d;
+      --primary: #0f766e;
+      --danger: #b8422d;
+      --line: #d9ceba;
+      --card: rgba(255, 255, 255, 0.92);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Sora", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 14%, #f7c883 0, transparent 34%),
+        radial-gradient(circle at 88% 88%, #9cd9c2 0, transparent 38%),
+        linear-gradient(165deg, #f7f2e9 0%, #ece5d6 100%);
+      min-height: 100vh;
+      padding: 22px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      border: 1px solid rgba(217, 206, 186, 0.95);
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--card);
+      box-shadow: 0 28px 70px rgba(31, 38, 34, 0.13);
+    }
+    header {
+      padding: 24px;
+      border-bottom: 1px solid rgba(217, 206, 186, 0.9);
+      background: linear-gradient(120deg, rgba(15, 118, 110, 0.13), rgba(205, 83, 52, 0.12));
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 2.2rem);
+    }
+    p { margin: 10px 0 0; color: var(--muted); }
+    .top-links {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .top-link {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 7px 11px;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border: 1px solid rgba(9, 75, 70, 0.3);
+      color: #0a5b55;
+      background: rgba(255, 255, 255, 0.75);
+      text-decoration: none;
+    }
+    main {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .card {
+      border: 1px solid rgba(217, 206, 186, 0.9);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 11px;
+    }
+    .label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .value {
+      margin-top: 5px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .panel {
+      border: 1px solid rgba(217, 206, 186, 0.9);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 14px;
+    }
+    .danger-box {
+      border: 1px solid rgba(184, 66, 45, 0.28);
+      background: rgba(184, 66, 45, 0.07);
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 12px;
+    }
+    .danger-title {
+      margin: 0;
+      color: #8f3321;
+      font-size: 0.95rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--ink);
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .refresh {
+      color: #fff;
+      background: linear-gradient(130deg, #0f766e, #0a5b55);
+    }
+    .purge {
+      color: #fff;
+      background: linear-gradient(130deg, #cd5334, #b8422d);
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .msg {
+      font-size: 0.9rem;
+      color: var(--muted);
+      min-height: 1.2em;
+    }
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      body { padding: 12px; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Settings & Purge</h1>
+      <p>Surveille l'etat du stockage local et purge les donnees de l'application quand tu veux repartir proprement.</p>
+      <div class="top-links">
+        <a class="top-link" href="/">Retour dashboard</a>
+        <a class="top-link" href="/downloads.html">Page telechargements</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="cards">
+        <article class="card"><span class="label">Data dir</span><span id="dataDir" class="value">-</span></article>
+        <article class="card"><span class="label">Taille locale</span><span id="size" class="value">-</span></article>
+        <article class="card"><span class="label">Jobs en cours</span><span id="running" class="value">-</span></article>
+        <article class="card"><span class="label">Jobs en memoire</span><span id="total" class="value">-</span></article>
+      </section>
+
+      <section class="panel">
+        <div class="danger-box">
+          <h2 class="danger-title">Zone sensible</h2>
+          <p style="margin:0; color: var(--muted);">La purge supprime les donnees locales de l'application: jobs en memoire, images temporaires et exports PDF sous data/jobs.</p>
+          <label class="check">
+            <input id="confirmPurge" type="checkbox" />
+            Je confirme vouloir purger les donnees.
+          </label>
+          <div class="actions">
+            <button class="refresh" id="refreshBtn" type="button">Rafraichir stats</button>
+            <button class="purge" id="purgeBtn" type="button" disabled>Purger les donnees</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="message" class="msg"></div>
+    </main>
+  </div>
+
+  <script>
+    const dataDirEl = document.getElementById("dataDir");
+    const sizeEl = document.getElementById("size");
+    const runningEl = document.getElementById("running");
+    const totalEl = document.getElementById("total");
+    const messageEl = document.getElementById("message");
+    const confirmEl = document.getElementById("confirmPurge");
+    const purgeBtn = document.getElementById("purgeBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    confirmEl.addEventListener("change", () => {
+      purgeBtn.disabled = !confirmEl.checked;
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      loadStats().catch((error) => {
+        messageEl.textContent = `Erreur stats: ${error}`;
+      });
+    });
+
+    purgeBtn.addEventListener("click", async () => {
+      purgeBtn.disabled = true;
+      refreshBtn.disabled = true;
+      messageEl.textContent = "Purge en cours...";
+
+      try {
+        const response = await fetch("/settings/purge", { method: "POST" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+
+        messageEl.textContent = `Purge terminee. Entrees supprimees: ${payload.removed_entries || 0}, espace libere: ${formatBytes(payload.freed_bytes || 0)}.`;
+        confirmEl.checked = false;
+        purgeBtn.disabled = true;
+        await loadStats();
+      } catch (error) {
+        messageEl.textContent = `Erreur purge: ${error}`;
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    });
+
+    async function loadStats() {
+      const response = await fetch("/settings/storage");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const stats = await response.json();
+      dataDirEl.textContent = stats.data_dir || "-";
+      sizeEl.textContent = formatBytes(stats.size_bytes || 0);
+      runningEl.textContent = String(stats.active_jobs || 0);
+      totalEl.textContent = String(stats.jobs_total || 0);
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes) return "0 B";
+      const units = ["B", "KB", "MB", "GB", "TB"];
+      let value = bytes;
+      let idx = 0;
+      while (value >= 1024 && idx < units.length - 1) {
+        value /= 1024;
+        idx += 1;
+      }
+      return `${value.toFixed(value >= 100 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+    }
+
+    loadStats().catch((error) => {
+      messageEl.textContent = `Erreur initiale: ${error}`;
+    });
+  </script>
+</body>
+</html>
