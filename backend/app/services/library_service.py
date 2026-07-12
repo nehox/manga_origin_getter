@@ -26,17 +26,69 @@ class LibraryService:
         self.store = store
         self.registry = registry
 
-    def get_library_root(self) -> Optional[Path]:
-        root = self.store.get_setting("library_root_path")
-        if not root:
-            return None
-        return Path(root).expanduser().resolve()
+    def list_library_roots(self) -> list[dict[str, Any]]:
+        roots = self.store.list_roots()
+        result = []
+        for root in roots:
+            path = Path(str(root["path"]))
+            result.append(
+                {
+                    "id": int(root["id"]),
+                    "path": str(root["path"]),
+                    "exists": path.exists(),
+                    "manga_count": self.store.count_manga_for_root(int(root["id"])),
+                }
+            )
+        return result
 
-    def set_library_root(self, root_path: str) -> Path:
-        root = Path(root_path).expanduser().resolve()
+    def add_library_root(self, root_path: str) -> dict[str, Any]:
+        candidate = root_path.strip()
+        if not candidate:
+            raise ValueError("Le chemin de la racine ne peut pas etre vide")
+
+        root = Path(candidate).expanduser().resolve()
         root.mkdir(parents=True, exist_ok=True)
-        self.store.set_setting("library_root_path", str(root))
-        return root
+        root_id = self.store.add_root(str(root))
+        return {"id": root_id, "path": str(root), "exists": True, "manga_count": 0}
+
+    def remove_library_root(self, root_id: int) -> None:
+        if not self.store.get_root(root_id):
+            raise ValueError("Racine introuvable")
+        if self.store.count_manga_for_root(root_id) > 0:
+            raise ValueError("Impossible de supprimer une racine encore utilisee par des mangas")
+        self.store.delete_root(root_id)
+
+    def get_root_path(self, root_id: int) -> Path:
+        root = self.store.get_root(root_id)
+        if not root:
+            raise ValueError("Racine introuvable")
+        return Path(str(root["path"])).expanduser().resolve()
+
+    def _default_root_id(self) -> Optional[int]:
+        roots = self.store.list_roots()
+        return int(roots[0]["id"]) if roots else None
+
+    def _sanitize_local_subdir(self, local_subdir: str) -> str:
+        candidate = local_subdir.strip()
+        if not candidate:
+            raise ValueError("Local subdir cannot be empty")
+
+        path = Path(candidate)
+        if path.is_absolute():
+            raise ValueError("Local subdir must be a relative path")
+
+        cleaned_parts: list[str] = []
+        for part in path.parts:
+            if part in ("", "."):
+                continue
+            if part == "..":
+                raise ValueError("Local subdir cannot contain '..'")
+            cleaned_parts.append(part)
+
+        if not cleaned_parts:
+            raise ValueError("Local subdir cannot be empty")
+
+        return str(Path(*cleaned_parts))
 
     def add_or_update_tracked_manga(
         self,
@@ -45,19 +97,32 @@ class LibraryService:
         scan_interval_minutes: int,
         local_subdir: Optional[str] = None,
         auto_download_missing: bool = False,
+        root_id: Optional[int] = None,
     ) -> int:
         _ = self.registry.resolve(source_url)
+
+        if root_id is None:
+            root_id = self._default_root_id()
+        if root_id is None:
+            raise ValueError("Aucune racine de bibliotheque configuree. Ajoute une racine dans Parametres.")
+        if not self.store.get_root(root_id):
+            raise ValueError("Racine introuvable")
+
         parsed = urlparse(source_url)
         slug = Path(parsed.path.rstrip("/")).name
         title = slug.replace("-", " ").title() if slug else "Manga"
-        subdir = local_subdir.strip() if local_subdir and local_subdir.strip() else to_slug(title)
+        if local_subdir and local_subdir.strip():
+            subdir = self._sanitize_local_subdir(local_subdir)
+        else:
+            subdir = to_slug(title)
         return self.store.upsert_manga(
             title=title,
             slug=to_slug(title),
             source_url=source_url,
-            local_subdir=to_slug(subdir),
+            local_subdir=subdir,
             scan_interval_minutes=scan_interval_minutes,
             auto_download_missing=auto_download_missing,
+            root_id=root_id,
         )
 
     def delete_manga(self, manga_id: int) -> None:
@@ -96,9 +161,10 @@ class LibraryService:
         if not manga:
             raise ValueError("Manga not found")
 
-        root = self.get_library_root()
-        if not root:
-            raise RuntimeError("Library root path is not configured")
+        root_id = manga.get("root_id")
+        if root_id is None:
+            raise RuntimeError("Aucune racine de bibliotheque associee a ce manga")
+        root = self.get_root_path(int(root_id))
 
         source_url = str(manga["source_url"])
         adapter = self.registry.resolve(source_url)
@@ -184,9 +250,10 @@ class LibraryService:
         if not manga:
             raise ValueError("Manga not found")
 
-        root = self.get_library_root()
-        if not root:
-            raise RuntimeError("Library root path is not configured")
+        root_id = manga.get("root_id")
+        if root_id is None:
+            raise RuntimeError("Aucune racine de bibliotheque associee a ce manga")
+        root = self.get_root_path(int(root_id))
 
         source_url = str(manga["source_url"])
         adapter = self.registry.resolve(source_url)
@@ -230,21 +297,32 @@ class LibraryService:
         return details
 
     def list_unlinked_local_dirs(self) -> list[dict[str, Any]]:
-        root = self.get_library_root()
-        if not root or not root.exists():
-            return []
-
-        tracked = {str(manga["local_subdir"]) for manga in self.store.list_manga()}
+        tracked = {
+            (manga.get("root_id"), str(manga["local_subdir"]))
+            for manga in self.store.list_manga()
+        }
         unlinked: list[dict[str, Any]] = []
-        for child in sorted(root.iterdir()):
-            if not child.is_dir():
+        for root_row in self.store.list_roots():
+            root_id = int(root_row["id"])
+            root = Path(str(root_row["path"])).expanduser().resolve()
+            if not root.exists():
                 continue
-            if child.name in tracked:
-                continue
-            pdf_count = len(list(child.glob("*.pdf")))
-            if pdf_count == 0:
-                continue
-            unlinked.append({"local_subdir": child.name, "pdf_count": pdf_count})
+            for child in sorted(root.iterdir()):
+                if not child.is_dir():
+                    continue
+                if (root_id, child.name) in tracked:
+                    continue
+                pdf_count = len(list(child.glob("*.pdf")))
+                if pdf_count == 0:
+                    continue
+                unlinked.append(
+                    {
+                        "root_id": root_id,
+                        "root_path": str(root),
+                        "local_subdir": child.name,
+                        "pdf_count": pdf_count,
+                    }
+                )
         return unlinked
 
     def get_manga_details(self, manga_id: int) -> dict[str, Any]:
@@ -265,8 +343,23 @@ class LibraryService:
             if nxt - current > 1:
                 numeric_gaps.extend(list(range(current + 1, nxt)))
 
+        def chapter_status(c: dict[str, Any]) -> str:
+            if int(c["local_present"]) == 1:
+                return "downloaded"
+            if int(c["remote_present"]) == 1:
+                return "missing"
+            return "unavailable"
+
+        root_id = manga.get("root_id")
+        root_path: Optional[str] = None
+        if root_id is not None:
+            root_row = self.store.get_root(int(root_id))
+            if root_row:
+                root_path = str(root_row["path"])
+
         return {
             **manga,
+            "root_path": root_path,
             "auto_download_missing": bool(int(manga.get("auto_download_missing") or 0)),
             "remote_total": len(remote_present),
             "present_total": len(local_present),
@@ -280,15 +373,24 @@ class LibraryService:
                 }
                 for c in missing
             ],
+            "chapters": [
+                {
+                    "chapter_slug": c["chapter_slug"],
+                    "chapter_title": c["chapter_title"],
+                    "chapter_url": c["chapter_url"],
+                    "chapter_number": c["chapter_number"],
+                    "status": chapter_status(c),
+                }
+                for c in chapters
+            ],
             "numeric_gaps": numeric_gaps,
         }
 
     def list_library_overview(self) -> dict[str, Any]:
         mangas = self.store.list_manga()
         with_stats = [self.get_manga_details(int(manga["id"])) for manga in mangas]
-        root = self.get_library_root()
         return {
-            "library_root_path": str(root) if root else None,
+            "library_roots": self.list_library_roots(),
             "mangas": with_stats,
             "unlinked_dirs": self.list_unlinked_local_dirs(),
         }

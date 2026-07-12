@@ -3,473 +3,167 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Manga Origin Getter</title>
+  <title>Telechargements - Manga Origin Getter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f4efe5;
-      --paper: #fffdf7;
-      --ink: #1f2622;
-      --muted: #58645d;
-      --primary: #0f766e;
-      --primary-strong: #0a5b55;
-      --hot: #cd5334;
-      --line: #d9ceba;
-      --shadow: 0 30px 80px rgba(31, 38, 34, 0.14);
+      --bg: #14171d;
+      --line: #30374a;
+      --text: #e7edf7;
+      --muted: #9aa8bf;
+      --accent: #f5b126;
+      --ok: #3ac97b;
+      --warn: #f4a23a;
+      --bad: #ea5a58;
+      --info: #53a3ff;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: "Sora", "Trebuchet MS", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 8% 12%, #f7c883 0, transparent 34%),
-        radial-gradient(circle at 86% 88%, #9cd9c2 0, transparent 38%),
-        linear-gradient(165deg, #f7f2e9 0%, #ece5d6 100%);
-      min-height: 100vh;
-      padding: 26px;
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    body::before,
-    body::after {
-      content: "";
-      position: fixed;
-      inset: auto;
-      width: 420px;
-      height: 420px;
-      border-radius: 999px;
-      pointer-events: none;
-      filter: blur(80px);
-      opacity: 0.45;
-      z-index: 0;
-    }
-
-    body::before {
-      top: -140px;
-      right: -80px;
-      background: #f4ae5b;
-    }
-
-    body::after {
-      bottom: -170px;
-      left: -120px;
-      background: #7ec5ad;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 1120px;
-      margin: 0 auto;
-      background: linear-gradient(180deg, rgba(255, 253, 247, 0.95), rgba(255, 250, 238, 0.92));
-      border: 1px solid rgba(217, 206, 186, 0.95);
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-      animation: rise-in 0.55s ease-out;
-    }
-
-    header {
-      padding: 30px;
-      background:
-        linear-gradient(125deg, rgba(15, 118, 110, 0.1), rgba(205, 83, 52, 0.1)),
-        linear-gradient(125deg, #f5c17a, #c2ebd3);
-      border-bottom: 1px solid rgba(217, 206, 186, 0.95);
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #094b46;
-      background: rgba(255, 255, 255, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.75);
-    }
-
-    h1 {
-      margin: 14px 0 4px;
-      font-family: "Libre Baskerville", Georgia, serif;
-      font-size: clamp(2rem, 4vw, 2.8rem);
-      letter-spacing: 0.01em;
-      line-height: 1.15;
-    }
-
-    .top-links {
-      margin-top: 12px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .top-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      padding: 7px 11px;
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border: 1px solid rgba(9, 75, 70, 0.25);
-      color: #0a5b55;
-      background: rgba(255, 255, 255, 0.7);
-      text-decoration: none;
-      font-weight: 700;
-    }
-
-    p {
-      color: var(--muted);
-      margin: 0;
-      max-width: 66ch;
-    }
-
-    main { padding: 26px; display: grid; gap: 16px; }
-
-    .row {
+    html, body { margin: 0; min-height: 100%; font-family: "Manrope", sans-serif; background: var(--bg); color: var(--text); }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #191d25, #161a21);
+      padding: 14px 12px;
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 10px;
+      grid-template-rows: auto auto 1fr;
+      gap: 14px;
     }
+    .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #f7f9fe; }
+    .logo-mark { width: 26px; height: 26px; border-radius: 6px; background: linear-gradient(140deg, var(--accent), #d97f00); display: inline-flex; align-items: center; justify-content: center; color: #241800; font-weight: 900; font-size: 0.78rem; }
+    .menu { display: grid; gap: 5px; }
+    .menu a { color: #d5deeb; text-decoration: none; padding: 9px 10px; border-radius: 8px; font-size: 0.9rem; border: 1px solid transparent; }
+    .menu a.active { background: #252c3a; border-color: #374058; color: #fff; }
+    .menu a:hover { border-color: #333b4d; background: #222836; }
 
-    input, button {
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      padding: 13px 15px;
-      font: inherit;
+    .main { display: grid; grid-template-rows: auto auto auto 1fr; min-width: 0; }
+    .topbar { padding: 12px 14px; border-bottom: 1px solid var(--line); background: #181d27; }
+    .topbar h1 { margin: 0; font-size: 1.3rem; }
+    .topbar p { margin: 5px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+    .job-form { border-bottom: 1px solid var(--line); background: #171c26; padding: 12px 14px; display: grid; gap: 8px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+    input, button { font: inherit; border-radius: 7px; }
+    input { border: 1px solid #3a4357; background: #10141c; color: #edf2fb; padding: 8px 9px; }
+    button { border: 1px solid #434f68; background: #2a3243; color: #edf2fb; padding: 8px 10px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #323c52; }
+    button:disabled { opacity: 0.58; cursor: not-allowed; }
+    .accent { background: linear-gradient(120deg, #f5b126, #e58d10); border-color: #e79918; color: #241700; }
+    .msg { color: #9fb0ca; font-size: 0.84rem; min-height: 1.1em; }
+
+    .kpi-grid { border-bottom: 1px solid var(--line); padding: 12px 14px; display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #171c26; }
+    .kpi { border: 1px solid #364057; background: #1f2532; border-radius: 8px; padding: 8px 9px; }
+    .kpi .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #96a7bf; }
+    .kpi .value { margin-top: 5px; font-size: 0.92rem; font-weight: 700; word-break: break-word; }
+
+    .status-box { margin: 12px 14px 0; border: 1px solid var(--line); border-radius: 8px; background: #1f2532; padding: 10px; }
+    .progress-track { margin-top: 8px; height: 9px; border-radius: 99px; overflow: hidden; background: #10141c; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #d97f00); transition: width 0.25s ease; }
+
+    .workspace { padding: 12px 14px 16px; display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 10px; min-height: 0; }
+    .panel { border: 1px solid var(--line); border-radius: 8px; background: #1d2431; display: grid; grid-template-rows: auto 1fr; min-height: 0; min-width: 0; }
+    .panel-head { padding: 10px; border-bottom: 1px solid #344055; background: #202838; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .panel-head h2 { margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: #a4b5cc; }
+    .queue-list { overflow: auto; min-height: 0; }
+    .queue-item { width: 100%; border: none; border-bottom: 1px solid #2b3245; background: transparent; text-align: left; color: var(--text); padding: 10px 12px; cursor: pointer; display: grid; gap: 3px; }
+    .queue-item:hover { background: #232b3a; }
+    .queue-item.active { background: #262f42; box-shadow: inset 3px 0 0 var(--accent); }
+    .queue-title { font-size: 0.86rem; font-weight: 700; }
+    .queue-meta { font-size: 0.76rem; color: var(--muted); }
+
+    .table-wrap { overflow: auto; min-height: 0; }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #2b3245; font-size: 0.86rem; vertical-align: middle; }
+    th { position: sticky; top: 0; background: #202838; color: #a4b5cc; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .chip { display: inline-flex; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid; border-radius: 20px; padding: 3px 7px; font-weight: 800; background: #141923; }
+    .chip.done { color: var(--ok); border-color: #3e8e63; }
+    .chip.failed { color: var(--bad); border-color: #9b4f53; }
+    .chip.pending, .chip.discovering, .chip.downloading, .chip.assembling { color: var(--warn); border-color: #9b7a3d; }
+
+    a.pdf-link { color: var(--info); font-weight: 700; text-decoration: none; }
+    a.pdf-link:hover { text-decoration: underline; }
+
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .menu { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-
-    input {
-      background: rgba(255, 255, 255, 0.95);
-      transition: box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: rgba(15, 118, 110, 0.5);
-      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.14);
-    }
-
-    button {
-      border: none;
-      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-      color: #fff;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      min-width: 140px;
-      box-shadow: 0 10px 26px rgba(15, 118, 110, 0.25);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(15, 118, 110, 0.3);
-    }
-
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .card {
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 14px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.86);
-    }
-
-    .card .label {
-      display: block;
-      font-size: 0.75rem;
-      letter-spacing: 0.04em;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 5px;
-    }
-
-    .card .value {
-      font-size: 1rem;
-      font-weight: 700;
-      word-break: break-word;
-    }
-
-    .status {
-      padding: 12px;
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.88);
-    }
-
-    .progress-track {
-      margin-top: 10px;
-      height: 10px;
-      border-radius: 99px;
-      background: #eae4d6;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), #3d9a92);
-      transition: width 0.25s ease;
-    }
-
-    .status strong { color: var(--hot); }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 12px;
-    }
-
-    .panel {
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.9);
-      overflow: hidden;
-    }
-
-    .panel h2 {
-      margin: 0;
-      padding: 11px 12px;
-      font-size: 0.82rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #4e5e57;
-      background: #f5ead7;
-      border-bottom: 1px solid rgba(217, 206, 186, 0.75);
-    }
-
-    .panel .panel-body {
-      padding: 10px 12px;
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-
-    .ghost-btn {
-      margin-top: 10px;
-      width: auto;
-      min-width: 180px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(15, 118, 110, 0.35);
-      background: rgba(15, 118, 110, 0.09);
-      color: #0a5b55;
-      font-size: 0.86rem;
-      font-weight: 700;
-      box-shadow: none;
-      transition: background 0.2s ease;
-    }
-
-    .ghost-btn:hover {
-      background: rgba(15, 118, 110, 0.16);
-      transform: none;
-      box-shadow: none;
-    }
-
-    .ghost-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .queue-list {
-      max-height: 250px;
-      overflow: auto;
-      display: grid;
-    }
-
-    .queue-item {
-      border: none;
-      border-bottom: 1px solid rgba(217, 206, 186, 0.7);
-      background: transparent;
-      color: var(--ink);
-      text-align: left;
-      width: 100%;
-      padding: 10px 12px;
-      min-width: 0;
-      box-shadow: none;
-      cursor: pointer;
-      display: grid;
-      gap: 4px;
-    }
-
-    .queue-item:hover { background: rgba(15, 118, 110, 0.07); transform: none; }
-
-    .queue-item.active {
-      background: rgba(15, 118, 110, 0.12);
-      outline: 1px solid rgba(15, 118, 110, 0.25);
-    }
-
-    .queue-title {
-      font-size: 0.86rem;
-      font-weight: 700;
-    }
-
-    .queue-meta {
-      font-size: 0.76rem;
-      color: var(--muted);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: rgba(255, 255, 255, 0.92);
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid rgba(217, 206, 186, 0.9);
-    }
-
-    th, td {
-      text-align: left;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(217, 206, 186, 0.75);
-      font-size: 0.94rem;
-      vertical-align: middle;
-    }
-
-    th {
-      background: #f5ead7;
-      font-size: 0.78rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #4e5e57;
-    }
-
-    tr:last-child td { border-bottom: none; }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 5px 10px;
-      font-weight: 700;
-      font-size: 0.78rem;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      border: 1px solid;
-    }
-
-    .chip.done {
-      color: #0d6a53;
-      background: #e2f6ee;
-      border-color: #bfead9;
-    }
-
-    .chip.failed {
-      color: #9f3e2e;
-      background: #fbe8e2;
-      border-color: #f2c7bb;
-    }
-
-    .chip.pending,
-    .chip.downloading,
-    .chip.assembling,
-    .chip.discovering {
-      color: #6a613e;
-      background: #fbf2d9;
-      border-color: #eedfb6;
-    }
-
-    a { color: #155f9d; font-weight: 600; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    @keyframes rise-in {
-      from { transform: translateY(10px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    @media (max-width: 980px) {
-      .row { grid-template-columns: 1fr; }
-      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .split { grid-template-columns: 1fr; }
-      button { width: 100%; }
-    }
-
-    @media (max-width: 640px) {
-      body { padding: 14px; }
-      header, main { padding: 16px; }
-      .cards { grid-template-columns: 1fr; }
-      table { display: block; overflow-x: auto; white-space: nowrap; }
+    @media (max-width: 760px) {
+      .menu { grid-template-columns: 1fr; }
+      .form-row, .workspace { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <span class="tag">Manga Automation Studio</span>
-      <h1>Manga Origin Getter</h1>
-      <p>Colle une URL d'oeuvre, choisis un dossier de sortie, puis suis la fabrication automatique des PDF chapitre par chapitre.</p>
-      <div class="top-links">
-        <a class="top-link" href="/">Bibliotheque</a>
-        <a class="top-link" href="/settings.html">Settings &amp; purge</a>
-      </div>
-    </header>
-    <main>
-      <div class="row">
-        <input id="sourceUrl" placeholder="https://mangas-origines.fr/oeuvre/demon-slave/" />
-        <input id="outputDir" placeholder="Chemin de sortie PDF (ex: /Users/toi/Downloads/manga-pdf)" />
-        <button id="launchBtn">Lancer le job</button>
-      </div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-mark">MO</span><span>Manga Origin</span></div>
+      <nav class="menu">
+        <a href="/">Catalogue</a>
+        <a href="/add-manga.html">Ajouter un manga</a>
+        <a href="/link-manga.html">Lier un manga</a>
+        <a class="active" href="/downloads.html">Telechargements</a>
+        <a href="/settings.html">Parametres</a>
+      </nav>
+    </aside>
 
-      <div class="cards">
-        <div class="card"><span class="label">Job</span><span class="value" id="jobCard">-</span></div>
-        <div class="card"><span class="label">Oeuvre</span><span class="value" id="workCard">-</span></div>
-        <div class="card"><span class="label">Etat</span><span class="value" id="stateCard">-</span></div>
-        <div class="card"><span class="label">Sortie PDF</span><span class="value" id="dirCard">-</span></div>
-      </div>
+    <main class="main">
+      <header class="topbar">
+        <h1>Telechargements</h1>
+        <p>Cree un job de telechargement, suis la file active et relance les chapitres en echec.</p>
+      </header>
 
-      <div class="status" id="status">
-        <span id="statusText">Aucun job en cours.</span>
-        <div class="progress-track">
-          <div class="progress-fill" id="progressFill"></div>
+      <section class="job-form">
+        <div class="form-row">
+          <input id="sourceUrl" placeholder="https://mangas-origines.fr/oeuvre/demon-slave/" />
+          <input id="outputDir" placeholder="Chemin de sortie PDF (ex: /Users/toi/Downloads/manga-pdf)" />
+          <button id="launchBtn" class="accent" type="button">Lancer job</button>
         </div>
-      </div>
+        <div id="statusText" class="msg">Aucun job en cours.</div>
+      </section>
 
-      <div class="split">
-        <section class="panel">
-          <h2>File de fond</h2>
-          <div class="queue-list" id="queueList"></div>
-        </section>
-        <section class="panel">
-          <h2>Info</h2>
-          <div class="panel-body">
-            Tu peux lancer plusieurs jobs d'affilee. Ils partent en background et sont traites automatiquement.
-            <br />
-            <button id="retryFailedBtn" class="ghost-btn" type="button" disabled>Relancer les chapitres failed</button>
+      <section class="kpi-grid">
+        <article class="kpi"><span class="label">Job</span><div id="jobCard" class="value">-</div></article>
+        <article class="kpi"><span class="label">Oeuvre</span><div id="workCard" class="value">-</div></article>
+        <article class="kpi"><span class="label">Etat</span><div id="stateCard" class="value">-</div></article>
+        <article class="kpi"><span class="label">Sortie PDF</span><div id="dirCard" class="value">-</div></article>
+      </section>
+
+      <section class="status-box">
+        <strong>Progression</strong>
+        <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+      </section>
+
+      <section class="workspace">
+        <article class="panel">
+          <div class="panel-head">
+            <h2>File des jobs</h2>
+            <button id="retryFailedBtn" type="button" disabled>Relancer failed</button>
           </div>
-        </section>
-      </div>
+          <div id="queueList" class="queue-list"></div>
+        </article>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Chapitre</th>
-            <th>Etat</th>
-            <th>Images</th>
-            <th>PDF</th>
-            <th>Erreur</th>
-          </tr>
-        </thead>
-        <tbody id="chapterBody"></tbody>
-      </table>
+        <article class="panel">
+          <div class="panel-head"><h2>Chapitres</h2></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Chapitre</th>
+                  <th>Etat</th>
+                  <th>Images</th>
+                  <th>PDF</th>
+                  <th>Erreur</th>
+                </tr>
+              </thead>
+              <tbody id="chapterBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
     </main>
   </div>
 
@@ -520,7 +214,7 @@
 
         const job = await response.json();
         currentJobId = job.id;
-        statusText.textContent = `Job ${job.id} ajoute a la file de fond.`;
+        statusText.textContent = `Job ${job.id} ajoute a la file.`;
         await refreshQueue();
         startDetailPoll(job.id);
       } catch (error) {
@@ -637,7 +331,7 @@
             const row = document.createElement("tr");
             const statusClass = chapter.status === "failed" ? "failed" : chapter.status;
             const pdfCell = chapter.pdf_path
-              ? `<a href="/jobs/${job.id}/chapters/${chapter.slug}/pdf" target="_blank" rel="noopener">Telecharger</a>`
+              ? `<a class="pdf-link" href="/jobs/${job.id}/chapters/${chapter.slug}/pdf" target="_blank" rel="noopener">Telecharger</a>`
               : "-";
 
             row.innerHTML = `

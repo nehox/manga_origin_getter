@@ -68,8 +68,8 @@ class JobPaths(BaseModel):
     pdf_dir: Path
 
 
-class LibrarySettingsRequest(BaseModel):
-    library_root_path: str
+class LibraryRootCreateRequest(BaseModel):
+    path: str
 
 
 class LibraryMangaCreateRequest(BaseModel):
@@ -77,6 +77,7 @@ class LibraryMangaCreateRequest(BaseModel):
     scan_interval_minutes: int = Field(default=60, ge=5, le=10080)
     local_subdir: Optional[str] = None
     auto_download_missing: bool = False
+    root_id: Optional[int] = None
 
 
 class LibraryMangaUpdateRequest(BaseModel):

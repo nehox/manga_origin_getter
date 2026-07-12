@@ -12,7 +12,7 @@ from app.models import (
     JobView,
     LibraryMangaCreateRequest,
     LibraryMangaUpdateRequest,
-    LibrarySettingsRequest,
+    LibraryRootCreateRequest,
 )
 from app.services.job_runner import JobRunner
 from app.services.library_scheduler import LibraryScheduler
@@ -115,21 +115,41 @@ async def library_manga_details(manga_id: int) -> dict:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
-@app.post("/library/settings")
-async def set_library_settings(request: LibrarySettingsRequest) -> dict:
-    root = library_service.set_library_root(request.library_root_path)
-    return {"library_root_path": str(root)}
+@app.get("/library/roots")
+async def list_library_roots() -> list[dict]:
+    return library_service.list_library_roots()
+
+
+@app.post("/library/roots")
+async def add_library_root(request: LibraryRootCreateRequest) -> dict:
+    try:
+        return library_service.add_library_root(request.path)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.delete("/library/roots/{root_id}")
+async def delete_library_root(root_id: int) -> dict:
+    try:
+        library_service.remove_library_root(root_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"deleted": True, "root_id": root_id}
 
 
 @app.post("/library/mangas")
 async def add_library_manga(request: LibraryMangaCreateRequest) -> dict:
-    manga_id = library_service.add_or_update_tracked_manga(
-        source_url=str(request.source_url),
-        scan_interval_minutes=request.scan_interval_minutes,
-        local_subdir=request.local_subdir,
-        auto_download_missing=request.auto_download_missing,
-    )
-    return await library_manga_scan(manga_id)
+    try:
+        manga_id = library_service.add_or_update_tracked_manga(
+            source_url=str(request.source_url),
+            scan_interval_minutes=request.scan_interval_minutes,
+            local_subdir=request.local_subdir,
+            auto_download_missing=request.auto_download_missing,
+            root_id=request.root_id,
+        )
+        return await library_manga_scan(manga_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.patch("/library/mangas/{manga_id}")

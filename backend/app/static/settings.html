@@ -3,200 +3,143 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Settings - Manga Origin Getter</title>
+  <title>Parametres - Manga Origin Getter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #f4efe5;
-      --ink: #1f2622;
-      --muted: #58645d;
-      --primary: #0f766e;
-      --danger: #b8422d;
-      --line: #d9ceba;
-      --card: rgba(255, 255, 255, 0.92);
+      --bg: #14171d;
+      --line: #30374a;
+      --text: #e7edf7;
+      --muted: #9aa8bf;
+      --accent: #f5b126;
+      --bad: #ea5a58;
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Sora", "Trebuchet MS", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 10% 14%, #f7c883 0, transparent 34%),
-        radial-gradient(circle at 88% 88%, #9cd9c2 0, transparent 38%),
-        linear-gradient(165deg, #f7f2e9 0%, #ece5d6 100%);
-      min-height: 100vh;
-      padding: 22px;
-    }
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      border: 1px solid rgba(217, 206, 186, 0.95);
-      border-radius: 20px;
-      overflow: hidden;
-      background: var(--card);
-      box-shadow: 0 28px 70px rgba(31, 38, 34, 0.13);
-    }
-    header {
-      padding: 24px;
-      border-bottom: 1px solid rgba(217, 206, 186, 0.9);
-      background: linear-gradient(120deg, rgba(15, 118, 110, 0.13), rgba(205, 83, 52, 0.12));
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(1.7rem, 3vw, 2.2rem);
-    }
-    p { margin: 10px 0 0; color: var(--muted); }
-    .top-links {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .top-link {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 7px 11px;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      border: 1px solid rgba(9, 75, 70, 0.3);
-      color: #0a5b55;
-      background: rgba(255, 255, 255, 0.75);
-      text-decoration: none;
-    }
-    main {
-      padding: 20px;
+    html, body { margin: 0; min-height: 100%; font-family: "Manrope", sans-serif; background: var(--bg); color: var(--text); }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #191d25, #161a21);
+      padding: 14px 12px;
       display: grid;
+      grid-template-rows: auto auto 1fr;
       gap: 14px;
     }
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+    .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #f7f9fe; }
+    .logo-mark { width: 26px; height: 26px; border-radius: 6px; background: linear-gradient(140deg, var(--accent), #d97f00); display: inline-flex; align-items: center; justify-content: center; color: #241800; font-weight: 900; font-size: 0.78rem; }
+    .menu { display: grid; gap: 5px; }
+    .menu a { color: #d5deeb; text-decoration: none; padding: 9px 10px; border-radius: 8px; font-size: 0.9rem; border: 1px solid transparent; }
+    .menu a.active { background: #252c3a; border-color: #374058; color: #fff; }
+    .menu a:hover { border-color: #333b4d; background: #222836; }
+
+    .main { display: grid; grid-template-rows: auto auto auto; min-width: 0; align-content: start; }
+    .topbar { padding: 12px 14px; border-bottom: 1px solid var(--line); background: #181d27; }
+    .topbar h1 { margin: 0; font-size: 1.3rem; }
+    .topbar p { margin: 5px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+    .kpi-grid { border-bottom: 1px solid var(--line); padding: 12px 14px; display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #171c26; }
+    .kpi { border: 1px solid #364057; background: #1f2532; border-radius: 8px; padding: 8px 9px; }
+    .kpi .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #96a7bf; }
+    .kpi .value { margin-top: 5px; font-size: 0.92rem; font-weight: 700; word-break: break-word; }
+
+    .panel-wrap { padding: 12px 14px 16px; display: grid; gap: 10px; }
+    .panel { border: 1px solid var(--line); border-radius: 8px; background: #1d2330; padding: 12px; display: grid; gap: 10px; }
+    .panel h2 { margin: 0; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #98abc7; }
+    .panel p { margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.4; }
+    .danger { border-color: #6b3630; background: #24191a; }
+    .confirm { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #d9e2f0; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { font: inherit; border: 1px solid #434f68; border-radius: 8px; padding: 9px 12px; color: #edf2fb; background: #2a3243; font-weight: 700; cursor: pointer; }
+    button:hover { background: #323c52; }
+    .refresh { background: linear-gradient(120deg, #f5b126, #e58d10); border-color: #e79918; color: #241700; }
+    .purge { background: linear-gradient(120deg, #d1483a, #a5372b); border-color: #a5372b; color: #fff; }
+    button:disabled { opacity: 0.58; cursor: not-allowed; }
+    .msg { min-height: 1.1em; font-size: 0.84rem; color: var(--muted); }
+    .root-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    input { font: inherit; border: 1px solid #3a4357; background: #10141c; color: #edf2fb; padding: 8px 9px; border-radius: 8px; }
+    .root-list { display: grid; gap: 8px; }
+    .root-item { border: 1px solid #364057; background: #1f2532; border-radius: 8px; padding: 9px 11px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .root-item .path { font-size: 0.86rem; word-break: break-word; }
+    .root-item .meta { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
+    .root-item .path-missing { color: var(--bad); }
+    .remove-root { background: linear-gradient(120deg, #d1483a, #a5372b); border-color: #a5372b; color: #fff; padding: 7px 10px; }
+
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .menu { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-    .card {
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.88);
-      padding: 11px;
-    }
-    .label {
-      display: block;
-      font-size: 0.72rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .value {
-      margin-top: 5px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      word-break: break-word;
-    }
-    .panel {
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.88);
-      padding: 14px;
-    }
-    .danger-box {
-      border: 1px solid rgba(184, 66, 45, 0.28);
-      background: rgba(184, 66, 45, 0.07);
-      border-radius: 12px;
-      padding: 12px;
-      display: grid;
-      gap: 12px;
-    }
-    .danger-title {
-      margin: 0;
-      color: #8f3321;
-      font-size: 0.95rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .check {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.9rem;
-      color: var(--ink);
-    }
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 11px 14px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .refresh {
-      color: #fff;
-      background: linear-gradient(130deg, #0f766e, #0a5b55);
-    }
-    .purge {
-      color: #fff;
-      background: linear-gradient(130deg, #cd5334, #b8422d);
-    }
-    button:disabled { opacity: 0.55; cursor: not-allowed; }
-    .msg {
-      font-size: 0.9rem;
-      color: var(--muted);
-      min-height: 1.2em;
-    }
-    @media (max-width: 900px) {
-      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 640px) {
-      body { padding: 12px; }
-      .cards { grid-template-columns: 1fr; }
+    @media (max-width: 760px) {
+      .menu { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .root-form { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Settings & Purge</h1>
-      <p>Surveille l'etat du stockage local et purge les donnees de l'application quand tu veux repartir proprement.</p>
-      <div class="top-links">
-        <a class="top-link" href="/">Retour dashboard</a>
-        <a class="top-link" href="/downloads.html">Page telechargements</a>
-      </div>
-    </header>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-mark">MO</span><span>Manga Origin</span></div>
+      <nav class="menu">
+        <a href="/">Catalogue</a>
+        <a href="/add-manga.html">Ajouter un manga</a>
+        <a href="/link-manga.html">Lier un manga</a>
+        <a href="/downloads.html">Telechargements</a>
+        <a class="active" href="/settings.html">Parametres</a>
+      </nav>
+    </aside>
 
-    <main>
-      <section class="cards">
-        <article class="card"><span class="label">Data dir</span><span id="dataDir" class="value">-</span></article>
-        <article class="card"><span class="label">Taille locale</span><span id="size" class="value">-</span></article>
-        <article class="card"><span class="label">Jobs en cours</span><span id="running" class="value">-</span></article>
-        <article class="card"><span class="label">Jobs en memoire</span><span id="total" class="value">-</span></article>
+    <main class="main">
+      <header class="topbar">
+        <h1>Parametres</h1>
+        <p>Racines de bibliotheque, occupation locale et actions de maintenance.</p>
+      </header>
+
+      <section class="panel-wrap">
+        <article class="panel">
+          <h2>Racines de bibliotheque</h2>
+          <p>Ajoute un ou plusieurs dossiers racine dans lesquels tes mangas sont ranges. Chaque manga ajoute ou lie choisit une de ces racines.</p>
+          <div class="root-form">
+            <input id="newRootPath" placeholder="/Users/toi/Downloads/manga-library" />
+            <button class="refresh" id="addRootBtn" type="button">Ajouter la racine</button>
+          </div>
+          <div id="rootList" class="root-list"></div>
+          <div id="rootMsg" class="msg"></div>
+        </article>
       </section>
 
-      <section class="panel">
-        <div class="danger-box">
-          <h2 class="danger-title">Zone sensible</h2>
-          <p style="margin:0; color: var(--muted);">La purge supprime les donnees locales de l'application: jobs en memoire, images temporaires et exports PDF sous data/jobs.</p>
-          <label class="check">
+      <section class="kpi-grid">
+        <article class="kpi"><span class="label">Data dir</span><div id="dataDir" class="value">-</div></article>
+        <article class="kpi"><span class="label">Taille locale</span><div id="size" class="value">-</div></article>
+        <article class="kpi"><span class="label">Jobs en cours</span><div id="running" class="value">-</div></article>
+        <article class="kpi"><span class="label">Jobs en memoire</span><div id="total" class="value">-</div></article>
+      </section>
+
+      <section class="panel-wrap">
+        <article class="panel">
+          <h2>Actualiser les metriques</h2>
+          <p>Recharge les statistiques de stockage et de jobs en temps reel.</p>
+          <div class="actions">
+            <button class="refresh" id="refreshBtn" type="button">Rafraichir stats</button>
+          </div>
+        </article>
+
+        <article class="panel danger">
+          <h2>Zone sensible</h2>
+          <p>La purge supprime les donnees locales de l'application: jobs en memoire, images temporaires et exports PDF sous data/jobs.</p>
+          <label class="confirm">
             <input id="confirmPurge" type="checkbox" />
             Je confirme vouloir purger les donnees.
           </label>
           <div class="actions">
-            <button class="refresh" id="refreshBtn" type="button">Rafraichir stats</button>
             <button class="purge" id="purgeBtn" type="button" disabled>Purger les donnees</button>
           </div>
-        </div>
-      </section>
+        </article>
 
-      <div id="message" class="msg"></div>
+        <div id="message" class="msg"></div>
+      </section>
     </main>
   </div>
 
@@ -209,6 +152,10 @@
     const confirmEl = document.getElementById("confirmPurge");
     const purgeBtn = document.getElementById("purgeBtn");
     const refreshBtn = document.getElementById("refreshBtn");
+    const newRootPathInput = document.getElementById("newRootPath");
+    const addRootBtn = document.getElementById("addRootBtn");
+    const rootList = document.getElementById("rootList");
+    const rootMsg = document.getElementById("rootMsg");
 
     confirmEl.addEventListener("change", () => {
       purgeBtn.disabled = !confirmEl.checked;
@@ -219,6 +166,89 @@
         messageEl.textContent = `Erreur stats: ${error}`;
       });
     });
+
+    addRootBtn.addEventListener("click", async () => {
+      const path = newRootPathInput.value.trim();
+      if (!path) {
+        rootMsg.textContent = "Entre un chemin valide.";
+        return;
+      }
+
+      addRootBtn.disabled = true;
+      try {
+        const response = await fetch("/library/roots", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+
+        newRootPathInput.value = "";
+        rootMsg.textContent = "Racine ajoutee.";
+        await loadRoots();
+      } catch (error) {
+        rootMsg.textContent = `Erreur ajout racine: ${error}`;
+      } finally {
+        addRootBtn.disabled = false;
+      }
+    });
+
+    async function loadRoots() {
+      const response = await fetch("/library/roots");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const roots = await response.json();
+      rootList.innerHTML = "";
+
+      if (!roots.length) {
+        rootList.innerHTML = '<div class="msg">Aucune racine configuree. Ajoute-en une ci-dessus.</div>';
+        return;
+      }
+
+      for (const root of roots) {
+        const item = document.createElement("div");
+        item.className = "root-item";
+        const pathClass = root.exists ? "path" : "path path-missing";
+        item.innerHTML = `
+          <div>
+            <div class="${pathClass}">${escapeHtml(root.path)}${root.exists ? "" : " (introuvable)"}</div>
+            <div class="meta">${root.manga_count} manga(s) suivi(s)</div>
+          </div>
+          <button class="remove-root" type="button" ${root.manga_count > 0 ? "disabled" : ""}>Supprimer</button>
+        `;
+        const removeBtn = item.querySelector("button");
+        removeBtn.addEventListener("click", async () => {
+          removeBtn.disabled = true;
+          try {
+            const response = await fetch(`/library/roots/${root.id}`, { method: "DELETE" });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(payload.detail || `HTTP ${response.status}`);
+            }
+            rootMsg.textContent = "Racine supprimee.";
+            await loadRoots();
+          } catch (error) {
+            rootMsg.textContent = `Erreur suppression racine: ${error}`;
+            removeBtn.disabled = false;
+          }
+        });
+        rootList.appendChild(item);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
 
     purgeBtn.addEventListener("click", async () => {
       purgeBtn.disabled = true;
@@ -270,6 +300,10 @@
 
     loadStats().catch((error) => {
       messageEl.textContent = `Erreur initiale: ${error}`;
+    });
+
+    loadRoots().catch((error) => {
+      rootMsg.textContent = `Erreur initiale: ${error}`;
     });
   </script>
 </body>

@@ -33,6 +33,12 @@ class LibraryStore:
                     updated_at TEXT NOT NULL
                 );
 
+                CREATE TABLE IF NOT EXISTS library_roots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    path TEXT NOT NULL UNIQUE,
+                    created_at TEXT NOT NULL
+                );
+
                 CREATE TABLE IF NOT EXISTS library_manga (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL,
@@ -73,7 +79,81 @@ class LibraryStore:
                 conn.execute(
                     "ALTER TABLE library_manga ADD COLUMN auto_download_missing INTEGER NOT NULL DEFAULT 0"
                 )
+            if "root_id" not in columns:
+                conn.execute("ALTER TABLE library_manga ADD COLUMN root_id INTEGER")
             conn.commit()
+            self._migrate_legacy_root(conn)
+
+    def _migrate_legacy_root(self, conn: sqlite3.Connection) -> None:
+        existing_roots = conn.execute("SELECT COUNT(*) AS n FROM library_roots").fetchone()
+        if existing_roots and int(existing_roots["n"]) > 0:
+            return
+
+        legacy_row = conn.execute(
+            "SELECT value FROM library_settings WHERE key = 'library_root_path'"
+        ).fetchone()
+        if not legacy_row:
+            return
+
+        legacy_path = str(legacy_row["value"])
+        now = utcnow_iso()
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO library_roots(path, created_at) VALUES (?, ?)",
+            (legacy_path, now),
+        )
+        root = conn.execute(
+            "SELECT id FROM library_roots WHERE path = ?", (legacy_path,)
+        ).fetchone()
+        if root:
+            conn.execute(
+                "UPDATE library_manga SET root_id = ? WHERE root_id IS NULL",
+                (int(root["id"]),),
+            )
+        conn.commit()
+
+    def list_roots(self) -> list[dict[str, Any]]:
+        with self._lock, self._connect() as conn:
+            rows = conn.execute(
+                "SELECT id, path, created_at FROM library_roots ORDER BY id ASC"
+            ).fetchall()
+            return [dict(row) for row in rows]
+
+    def get_root(self, root_id: int) -> Optional[dict[str, Any]]:
+        with self._lock, self._connect() as conn:
+            row = conn.execute(
+                "SELECT id, path, created_at FROM library_roots WHERE id = ?",
+                (root_id,),
+            ).fetchone()
+            return dict(row) if row else None
+
+    def add_root(self, path: str) -> int:
+        now = utcnow_iso()
+        with self._lock, self._connect() as conn:
+            existing = conn.execute(
+                "SELECT id FROM library_roots WHERE path = ?", (path,)
+            ).fetchone()
+            if existing:
+                raise ValueError("Cette racine est deja configuree")
+            cur = conn.execute(
+                "INSERT INTO library_roots(path, created_at) VALUES (?, ?)",
+                (path, now),
+            )
+            conn.commit()
+            return int(cur.lastrowid)
+
+    def delete_root(self, root_id: int) -> bool:
+        with self._lock, self._connect() as conn:
+            cur = conn.execute("DELETE FROM library_roots WHERE id = ?", (root_id,))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def count_manga_for_root(self, root_id: int) -> int:
+        with self._lock, self._connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) AS n FROM library_manga WHERE root_id = ?",
+                (root_id,),
+            ).fetchone()
+            return int(row["n"]) if row else 0
 
     def get_setting(self, key: str) -> Optional[str]:
         with self._lock, self._connect() as conn:
@@ -103,6 +183,7 @@ class LibraryStore:
         local_subdir: str,
         scan_interval_minutes: int,
         auto_download_missing: bool,
+        root_id: Optional[int] = None,
     ) -> int:
         now = utcnow_iso()
         with self._lock, self._connect() as conn:
@@ -113,31 +194,51 @@ class LibraryStore:
 
             if existing:
                 manga_id = int(existing["id"])
-                conn.execute(
-                    """
-                    UPDATE library_manga
-                    SET title = ?, slug = ?, local_subdir = ?, scan_interval_minutes = ?,
-                        auto_download_missing = ?, updated_at = ?
-                    WHERE id = ?
-                    """,
-                    (
-                        title,
-                        slug,
-                        local_subdir,
-                        scan_interval_minutes,
-                        1 if auto_download_missing else 0,
-                        now,
-                        manga_id,
-                    ),
-                )
+                if root_id is not None:
+                    conn.execute(
+                        """
+                        UPDATE library_manga
+                        SET title = ?, slug = ?, local_subdir = ?, scan_interval_minutes = ?,
+                            auto_download_missing = ?, root_id = ?, updated_at = ?
+                        WHERE id = ?
+                        """,
+                        (
+                            title,
+                            slug,
+                            local_subdir,
+                            scan_interval_minutes,
+                            1 if auto_download_missing else 0,
+                            root_id,
+                            now,
+                            manga_id,
+                        ),
+                    )
+                else:
+                    conn.execute(
+                        """
+                        UPDATE library_manga
+                        SET title = ?, slug = ?, local_subdir = ?, scan_interval_minutes = ?,
+                            auto_download_missing = ?, updated_at = ?
+                        WHERE id = ?
+                        """,
+                        (
+                            title,
+                            slug,
+                            local_subdir,
+                            scan_interval_minutes,
+                            1 if auto_download_missing else 0,
+                            now,
+                            manga_id,
+                        ),
+                    )
             else:
                 cur = conn.execute(
                     """
                     INSERT INTO library_manga(
                         title, slug, source_url, local_subdir, scan_interval_minutes,
-                        auto_download_missing,
+                        auto_download_missing, root_id,
                         created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         title,
@@ -146,6 +247,7 @@ class LibraryStore:
                         local_subdir,
                         scan_interval_minutes,
                         1 if auto_download_missing else 0,
+                        root_id,
                         now,
                         now,
                     ),
@@ -219,7 +321,7 @@ class LibraryStore:
             rows = conn.execute(
                 """
                 SELECT id, title, slug, source_url, local_subdir, scan_interval_minutes,
-                      auto_download_missing,
+                      auto_download_missing, root_id,
                        last_scan_at, next_scan_at, last_scan_status, last_scan_error
                 FROM library_manga
                 ORDER BY updated_at DESC, id DESC
@@ -232,7 +334,7 @@ class LibraryStore:
             row = conn.execute(
                 """
                 SELECT id, title, slug, source_url, local_subdir, scan_interval_minutes,
-                      auto_download_missing,
+                      auto_download_missing, root_id,
                        last_scan_at, next_scan_at, last_scan_status, last_scan_error
                 FROM library_manga
                 WHERE id = ?

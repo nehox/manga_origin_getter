@@ -3,384 +3,140 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bibliotheque - Manga Origin Getter</title>
+  <title>Catalogue - Manga Origin Getter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --ink: #1f2622;
-      --muted: #58645d;
-      --line: #d9ceba;
-      --primary: #0f766e;
-      --hot: #cd5334;
+      --bg: #14171d;
+      --line: #30374a;
+      --text: #e7edf7;
+      --muted: #9aa8bf;
+      --accent: #f5b126;
+      --ok: #3ac97b;
+      --warn: #f4a23a;
+      --bad: #ea5a58;
+      --info: #53a3ff;
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Sora", "Trebuchet MS", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 8% 12%, #f7c883 0, transparent 34%),
-        radial-gradient(circle at 86% 88%, #9cd9c2 0, transparent 38%),
-        linear-gradient(165deg, #f7f2e9 0%, #ece5d6 100%);
-      min-height: 100vh;
-      padding: 22px;
-    }
-    .wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: rgba(255, 253, 247, 0.95);
-      border: 1px solid rgba(217, 206, 186, 0.95);
-      border-radius: 22px;
-      overflow: hidden;
-      box-shadow: 0 28px 70px rgba(31, 38, 34, 0.14);
-    }
-    header {
-      padding: 24px;
-      background:
-        linear-gradient(125deg, rgba(15, 118, 110, 0.1), rgba(205, 83, 52, 0.1)),
-        linear-gradient(125deg, #f5c17a, #c2ebd3);
-      border-bottom: 1px solid rgba(217, 206, 186, 0.95);
-    }
-    .tag {
-      display: inline-flex;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 0.74rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #094b46;
-      background: rgba(255, 255, 255, 0.68);
-      border: 1px solid rgba(255, 255, 255, 0.82);
-    }
-    h1 {
-      margin: 14px 0 6px;
-      font-family: "Libre Baskerville", Georgia, serif;
-      font-size: clamp(2rem, 4vw, 2.8rem);
-    }
-    p { margin: 0; color: var(--muted); }
-    .links {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .link {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 7px 11px;
-      text-transform: uppercase;
-      font-size: 0.74rem;
-      letter-spacing: 0.05em;
-      border: 1px solid rgba(9, 75, 70, 0.28);
-      color: #0a5b55;
-      background: rgba(255, 255, 255, 0.72);
-      text-decoration: none;
-      font-weight: 700;
-    }
-    main {
-      padding: 20px;
+    html, body { margin: 0; min-height: 100%; font-family: "Manrope", sans-serif; background: var(--bg); color: var(--text); }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #191d25, #161a21);
+      padding: 14px 12px;
       display: grid;
+      grid-template-rows: auto auto 1fr;
       gap: 14px;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 12px;
-    }
-    .panel {
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.9);
-      overflow: hidden;
-    }
-    .panel h2 {
-      margin: 0;
-      padding: 11px 12px;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #4e5e57;
-      background: #f5ead7;
-      border-bottom: 1px solid rgba(217, 206, 186, 0.75);
-    }
-    .body { padding: 12px; display: grid; gap: 9px; }
-    .row { display: grid; grid-template-columns: 1fr 140px 160px; gap: 8px; }
-    .row2 { display: grid; grid-template-columns: 1fr 130px 150px auto; gap: 8px; }
-    .checkline {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-    input, button {
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      padding: 10px 12px;
-      font: inherit;
-    }
-    input { background: rgba(255, 255, 255, 0.95); }
-    button {
-      border: none;
-      background: linear-gradient(135deg, #0f766e, #0a5b55);
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button.secondary { background: linear-gradient(135deg, #4f8e88, #437a74); }
-    button.warn { background: linear-gradient(135deg, #b85b47, #9f3e2e); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
-    .card {
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.86);
-      padding: 10px;
-    }
-    .label { display: block; font-size: 0.72rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; }
-    .value { font-size: 0.95rem; font-weight: 700; margin-top: 5px; word-break: break-word; }
-    .msg { font-size: 0.88rem; color: var(--muted); min-height: 1.2em; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(217, 206, 186, 0.9);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    th, td {
-      text-align: left;
-      padding: 9px 10px;
-      border-bottom: 1px solid rgba(217, 206, 186, 0.7);
-      font-size: 0.9rem;
-      vertical-align: middle;
-    }
-    th {
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #4e5e57;
-      background: #f5ead7;
-    }
-    tr:last-child td { border-bottom: none; }
-    .chip {
-      display: inline-flex;
-      border-radius: 999px;
-      padding: 4px 8px;
-      font-size: 0.74rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .chip.ok { background: #e2f6ee; color: #0d6a53; }
-    .chip.error { background: #fbe8e2; color: #9f3e2e; }
-    .small-list {
-      max-height: 220px;
-      overflow: auto;
-      border: 1px solid rgba(217, 206, 186, 0.75);
-      border-radius: 10px;
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.82);
-      display: grid;
-      gap: 6px;
-    }
-    .small-item { font-size: 0.85rem; color: var(--ink); }
-    @media (max-width: 1020px) {
-      .grid { grid-template-columns: 1fr; }
-      .row, .row2 { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-    @media (max-width: 640px) {
-      body { padding: 10px; }
+    .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #f7f9fe; }
+    .logo-mark { width: 26px; height: 26px; border-radius: 6px; background: linear-gradient(140deg, var(--accent), #d97f00); display: inline-flex; align-items: center; justify-content: center; color: #241800; font-weight: 900; font-size: 0.78rem; }
+    .menu { display: grid; gap: 5px; }
+    .menu a { color: #d5deeb; text-decoration: none; padding: 9px 10px; border-radius: 8px; font-size: 0.9rem; border: 1px solid transparent; }
+    .menu a.active { background: #252c3a; border-color: #374058; color: #fff; }
+    .menu a:hover { border-color: #333b4d; background: #222836; }
+
+    .main { display: grid; grid-template-rows: auto auto 1fr; min-width: 0; }
+    .topbar { padding: 12px 14px; border-bottom: 1px solid var(--line); background: #181d27; display: grid; gap: 10px; }
+    .search-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
+    .search-wrap { display: flex; align-items: center; gap: 8px; border: 1px solid #3a4357; background: #10141c; border-radius: 8px; padding: 0 10px; min-height: 38px; }
+    .search-wrap input { border: none; outline: none; width: 100%; background: transparent; color: #edf2fb; font: inherit; }
+    .search-wrap input::placeholder { color: #7e8ca5; }
+    select, button { font: inherit; border-radius: 7px; }
+    select { border: 1px solid #3a4357; background: #10141c; color: #edf2fb; padding: 8px 9px; }
+    button { border: 1px solid #434f68; background: #2a3243; color: #edf2fb; padding: 8px 10px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #323c52; }
+    .accent { background: linear-gradient(120deg, #f5b126, #e58d10); border-color: #e79918; color: #241700; }
+
+    .stats { border-bottom: 1px solid var(--line); padding: 10px 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; background: #171c26; }
+    .stat { border: 1px solid #364057; background: #1f2532; border-radius: 8px; padding: 8px 9px; }
+    .stat .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: #96a7bf; }
+    .stat .value { margin-top: 5px; font-size: 0.92rem; font-weight: 700; }
+
+    .grid { padding: 12px; overflow: auto; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); align-content: start; }
+    .card { border: 1px solid #364058; border-radius: 10px; background: #1f2532; overflow: hidden; cursor: pointer; display: grid; grid-template-rows: 150px auto; text-decoration: none; color: inherit; }
+    .card:hover { border-color: #4d5e81; }
+    .poster { position: relative; background: linear-gradient(150deg, #23304a, #2c2241 45%, #4f2a24); display: flex; align-items: flex-end; padding: 10px; }
+    .poster::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 12, 17, 0.08), rgba(10, 12, 17, 0.7)); }
+    .poster-text { position: relative; z-index: 1; font-weight: 700; font-size: 0.87rem; line-height: 1.25; max-height: 2.5em; overflow: hidden; }
+    .status-pill { position: absolute; top: 8px; right: 8px; z-index: 1; font-size: 0.66rem; padding: 3px 6px; border-radius: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; border: 1px solid; background: rgba(20, 24, 33, 0.82); }
+    .status-pill.ok { color: var(--ok); border-color: #38895f; }
+    .status-pill.error { color: var(--bad); border-color: #a05050; }
+    .card-body { padding: 9px; display: grid; gap: 7px; }
+    .small { color: #9db0cb; font-size: 0.76rem; line-height: 1.3; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid; border-radius: 20px; padding: 2px 6px; font-weight: 800; background: #141923; }
+    .chip.good { color: var(--ok); border-color: #3e8e63; }
+    .chip.warn { color: var(--warn); border-color: #9b7a3d; }
+    .chip.info { color: var(--info); border-color: #4a7fb0; }
+
+    .placeholder { color: #9fb1cb; }
+    .msg { color: #9fb0ca; font-size: 0.8rem; }
+
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .menu { grid-template-columns: repeat(5, minmax(0, 1fr)); }
       .stats { grid-template-columns: 1fr; }
-      table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
+    @media (max-width: 760px) {
+      .menu { grid-template-columns: 1fr; }
+      .search-row { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <span class="tag">Home: Bibliotheque</span>
-      <h1>Bibliotheque Manga</h1>
-      <p>Indexe tes mangas deja telecharges, detecte les chapitres manquants et automatise le scan de nouvelles sorties.</p>
-      <div class="links">
-        <a class="link" href="/downloads.html">Ajouter / telecharger mangas</a>
-        <a class="link" href="/settings.html">Settings systeme</a>
-      </div>
-    </header>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-mark">MO</span><span>Manga Origin</span></div>
+      <nav class="menu">
+        <a class="active" href="/">Catalogue</a>
+        <a href="/add-manga.html">Ajouter un manga</a>
+        <a href="/link-manga.html">Lier un manga</a>
+        <a href="/downloads.html">Telechargements</a>
+        <a href="/settings.html">Parametres</a>
+      </nav>
+    </aside>
 
-    <main>
-      <section class="grid">
-        <article class="panel">
-          <h2>Path Bibliotheque</h2>
-          <div class="body">
-            <div class="row">
-              <input id="rootPath" placeholder="/Users/toi/Downloads/manga-library" />
-              <button id="saveRootBtn">Sauver path</button>
-              <button id="scanAllBtn" class="secondary">Scanner tout</button>
-            </div>
-            <div class="msg" id="rootMsg"></div>
-          </div>
-        </article>
-
-        <article class="panel">
-          <h2>Ajouter Manga Suivi</h2>
-          <div class="body">
-            <div class="row2">
-              <input id="sourceUrl" placeholder="https://.../oeuvre/... ou /manga/..." />
-              <input id="interval" type="number" min="5" value="60" placeholder="minutes" />
-              <input id="localSubdir" placeholder="sous-dossier local (optionnel)" />
-              <button id="addTrackBtn">Ajouter</button>
-            </div>
-            <label class="checkline">
-              <input id="autoDownloadMissing" type="checkbox" />
-              Auto-telecharger les chapitres manquants pendant les scans cron
-            </label>
-            <div class="msg" id="addMsg"></div>
-          </div>
-        </article>
-      </section>
+    <main class="main">
+      <header class="topbar">
+        <div class="search-row">
+          <div class="search-wrap"><span>🔎</span><input id="searchInput" placeholder="Rechercher un manga..." /></div>
+          <select id="filterSelect">
+            <option value="all">Tous</option>
+            <option value="missing">Avec chapitres manquants</option>
+            <option value="ok">Complets</option>
+            <option value="error">Scan en erreur</option>
+          </select>
+          <button id="scanAllBtn" class="accent" type="button">Scanner toute la collection</button>
+        </div>
+        <div id="tableMsg" class="msg"></div>
+      </header>
 
       <section class="stats">
-        <div class="card"><span class="label">Root path</span><span class="value" id="rootValue">-</span></div>
-        <div class="card"><span class="label">Mangas suivis</span><span class="value" id="trackedCount">0</span></div>
-        <div class="card"><span class="label">Dirs non lies</span><span class="value" id="unlinkedCount">0</span></div>
-        <div class="card"><span class="label">Selection</span><span class="value" id="selectedTitle">-</span></div>
+        <div class="stat"><span class="label">Mangas suivis</span><div id="trackedCount" class="value">0</div></div>
+        <div class="stat"><span class="label">Dossiers non lies</span><div id="unlinkedCount" class="value">0</div></div>
       </section>
 
-      <section class="panel">
-        <h2>Mangas suivis</h2>
-        <div class="body">
-          <table>
-            <thead>
-              <tr>
-                <th>Titre</th>
-                <th>Present</th>
-                <th>Manquant</th>
-                <th>Gaps</th>
-                <th>Auto DL</th>
-                <th>Scan</th>
-                <th>Prochain</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="mangaBody"></tbody>
-          </table>
-          <div class="msg" id="tableMsg"></div>
-        </div>
-      </section>
-
-      <section class="grid">
-        <article class="panel">
-          <h2>Chapitres manquants (selection)</h2>
-          <div class="body">
-            <div id="missingList" class="small-list"></div>
-          </div>
-        </article>
-        <article class="panel">
-          <h2>Dossiers non lies</h2>
-          <div class="body">
-            <div id="unlinkedList" class="small-list"></div>
-          </div>
-        </article>
-      </section>
+      <section id="mangaGrid" class="grid"></section>
     </main>
   </div>
 
   <script>
-    const rootPathInput = document.getElementById("rootPath");
-    const sourceUrlInput = document.getElementById("sourceUrl");
-    const intervalInput = document.getElementById("interval");
-    const localSubdirInput = document.getElementById("localSubdir");
-    const autoDownloadMissingInput = document.getElementById("autoDownloadMissing");
-
-    const rootMsg = document.getElementById("rootMsg");
-    const addMsg = document.getElementById("addMsg");
+    const searchInput = document.getElementById("searchInput");
+    const filterSelect = document.getElementById("filterSelect");
+    const scanAllBtn = document.getElementById("scanAllBtn");
     const tableMsg = document.getElementById("tableMsg");
 
-    const rootValue = document.getElementById("rootValue");
     const trackedCount = document.getElementById("trackedCount");
     const unlinkedCount = document.getElementById("unlinkedCount");
-    const selectedTitle = document.getElementById("selectedTitle");
-
-    const mangaBody = document.getElementById("mangaBody");
-    const missingList = document.getElementById("missingList");
-    const unlinkedList = document.getElementById("unlinkedList");
-
-    const saveRootBtn = document.getElementById("saveRootBtn");
-    const addTrackBtn = document.getElementById("addTrackBtn");
-    const scanAllBtn = document.getElementById("scanAllBtn");
+    const mangaGrid = document.getElementById("mangaGrid");
 
     let overview = null;
-    let selectedMangaId = null;
 
-    saveRootBtn.addEventListener("click", async () => {
-      const path = rootPathInput.value.trim();
-      if (!path) {
-        rootMsg.textContent = "Entre un path valide.";
-        return;
-      }
-      saveRootBtn.disabled = true;
-      try {
-        const response = await fetch("/library/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ library_root_path: path })
-        });
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.detail || `HTTP ${response.status}`);
-        }
-        rootMsg.textContent = "Path bibliotheque mis a jour.";
-        await refreshOverview();
-      } catch (error) {
-        rootMsg.textContent = `Erreur path: ${error}`;
-      } finally {
-        saveRootBtn.disabled = false;
-      }
-    });
-
-    addTrackBtn.addEventListener("click", async () => {
-      const sourceUrl = sourceUrlInput.value.trim();
-      const interval = Number(intervalInput.value || "60");
-      const localSubdir = localSubdirInput.value.trim();
-      const autoDownloadMissing = autoDownloadMissingInput.checked;
-      if (!sourceUrl) {
-        addMsg.textContent = "URL oeuvre requise.";
-        return;
-      }
-
-      addTrackBtn.disabled = true;
-      try {
-        const response = await fetch("/library/mangas", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            source_url: sourceUrl,
-            scan_interval_minutes: interval,
-            local_subdir: localSubdir || null,
-            auto_download_missing: autoDownloadMissing,
-          })
-        });
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.detail || `HTTP ${response.status}`);
-        }
-        addMsg.textContent = "Manga ajoute et scanne.";
-        sourceUrlInput.value = "";
-        localSubdirInput.value = "";
-        autoDownloadMissingInput.checked = false;
-        await refreshOverview();
-      } catch (error) {
-        addMsg.textContent = `Erreur ajout: ${error}`;
-      } finally {
-        addTrackBtn.disabled = false;
-      }
-    });
+    searchInput.addEventListener("input", renderOverview);
+    filterSelect.addEventListener("change", renderOverview);
 
     scanAllBtn.addEventListener("click", async () => {
       scanAllBtn.disabled = true;
@@ -401,194 +157,66 @@
       }
     });
 
-    async function scanOne(mangaId) {
-      tableMsg.textContent = "Scan manga en cours...";
-      const response = await fetch(`/library/mangas/${mangaId}/scan`, { method: "POST" });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.detail || `HTTP ${response.status}`);
-      }
-      await refreshOverview();
-      tableMsg.textContent = "Scan manga termine.";
+    function filterMangas(items) {
+      const q = searchInput.value.trim().toLowerCase();
+      const mode = filterSelect.value;
+      return items.filter((manga) => {
+        const matchesSearch = !q
+          || String(manga.title || "").toLowerCase().includes(q)
+          || String(manga.source_url || "").toLowerCase().includes(q)
+          || String(manga.local_subdir || "").toLowerCase().includes(q);
+
+        if (!matchesSearch) return false;
+        if (mode === "missing") return (manga.missing_total || 0) > 0;
+        if (mode === "ok") return (manga.missing_total || 0) === 0;
+        if (mode === "error") return manga.last_scan_status === "error";
+        return true;
+      });
     }
 
     function renderOverview() {
       if (!overview) return;
-
-      rootValue.textContent = overview.library_root_path || "-";
-      rootPathInput.value = overview.library_root_path || rootPathInput.value;
       trackedCount.textContent = String(overview.mangas.length);
       unlinkedCount.textContent = String(overview.unlinked_dirs.length);
 
-      mangaBody.innerHTML = "";
+      const visible = filterMangas(overview.mangas);
+      mangaGrid.innerHTML = "";
+
       if (!overview.mangas.length) {
-        const row = document.createElement("tr");
-        row.innerHTML = `<td colspan="8">Aucun manga suivi. Ajoute une URL pour commencer.</td>`;
-        mangaBody.appendChild(row);
+        mangaGrid.innerHTML = '<div class="placeholder">Aucun manga suivi. Va sur Ajouter un manga.</div>';
+        return;
+      }
+      if (!visible.length) {
+        mangaGrid.innerHTML = '<div class="placeholder">Aucun manga ne correspond au filtre.</div>';
+        return;
       }
 
-      for (const manga of overview.mangas) {
-        const row = document.createElement("tr");
-        const statusChip = manga.last_scan_status === "error"
-          ? `<span class="chip error">error</span>`
-          : `<span class="chip ok">ok</span>`;
+      for (const manga of visible) {
+        const card = document.createElement("a");
+        card.className = "card";
+        card.href = `/manga-detail.html?id=${encodeURIComponent(manga.id)}`;
+
+        const statusClass = manga.last_scan_status === "error" ? "error" : "ok";
+        const statusText = manga.last_scan_status === "error" ? "Error" : "OK";
+        const missingChip = (manga.missing_total || 0) > 0
+          ? `<span class="chip warn">${manga.missing_total} manquants</span>`
+          : '<span class="chip good">Complet</span>';
         const autoChip = manga.auto_download_missing
-          ? `<span class="chip ok">on</span>`
-          : `<span class="chip error">off</span>`;
-        const gapsText = manga.numeric_gaps && manga.numeric_gaps.length ? manga.numeric_gaps.slice(0, 8).join(", ") : "-";
+          ? '<span class="chip info">Auto ON</span>'
+          : '<span class="chip warn">Auto OFF</span>';
 
-        row.innerHTML = `
-          <td>${escapeHtml(manga.title)}</td>
-          <td>${manga.present_total}/${manga.remote_total}</td>
-          <td>${manga.missing_total}</td>
-          <td>${escapeHtml(gapsText)}</td>
-          <td>${autoChip}</td>
-          <td>${statusChip}</td>
-          <td>${escapeHtml(manga.next_scan_at || "-")}</td>
-          <td>
-            <button class="secondary" data-action="scan" data-id="${manga.id}">Scanner</button>
-            <button class="secondary" data-action="download-missing" data-id="${manga.id}">Telecharger manquants</button>
-            <button class="secondary" data-action="toggle-auto" data-id="${manga.id}">${manga.auto_download_missing ? "Auto OFF" : "Auto ON"}</button>
-            <button class="warn" data-action="delete" data-id="${manga.id}">Supprimer</button>
-            <button data-action="select" data-id="${manga.id}">Details</button>
-          </td>
+        card.innerHTML = `
+          <div class="poster">
+            <span class="status-pill ${statusClass}">${statusText}</span>
+            <div class="poster-text">${escapeHtml(manga.title)}</div>
+          </div>
+          <div class="card-body">
+            <div class="small">${manga.present_total}/${manga.remote_total} chapitres presents</div>
+            <div class="chips">${missingChip}${autoChip}</div>
+            <div class="small">Prochain scan: ${escapeHtml(manga.next_scan_at || "-")}</div>
+          </div>
         `;
-        mangaBody.appendChild(row);
-      }
-
-      mangaBody.querySelectorAll("button[data-action='scan']").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          btn.disabled = true;
-          try {
-            await scanOne(Number(btn.dataset.id));
-          } catch (error) {
-            tableMsg.textContent = `Erreur scan: ${error}`;
-          } finally {
-            btn.disabled = false;
-          }
-        });
-      });
-
-      mangaBody.querySelectorAll("button[data-action='select']").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          selectedMangaId = Number(btn.dataset.id);
-          renderSelected();
-        });
-      });
-
-      mangaBody.querySelectorAll("button[data-action='download-missing']").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const mangaId = Number(btn.dataset.id);
-          btn.disabled = true;
-          tableMsg.textContent = "Telechargement des chapitres manquants en cours...";
-          try {
-            const response = await fetch(`/library/mangas/${mangaId}/download-missing`, { method: "POST" });
-            if (!response.ok) {
-              const payload = await response.json().catch(() => ({}));
-              throw new Error(payload.detail || `HTTP ${response.status}`);
-            }
-            const payload = await response.json();
-            tableMsg.textContent = `Telechargement termine. Nouveaux chapitres telecharges: ${payload.downloaded_count || 0}.`;
-            await refreshOverview();
-          } catch (error) {
-            tableMsg.textContent = `Erreur telechargement manquants: ${error}`;
-          } finally {
-            btn.disabled = false;
-          }
-        });
-      });
-
-      mangaBody.querySelectorAll("button[data-action='toggle-auto']").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const mangaId = Number(btn.dataset.id);
-          const manga = overview.mangas.find((item) => item.id === mangaId);
-          if (!manga) return;
-          btn.disabled = true;
-          try {
-            const response = await fetch(`/library/mangas/${mangaId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ auto_download_missing: !manga.auto_download_missing })
-            });
-            if (!response.ok) {
-              const payload = await response.json().catch(() => ({}));
-              throw new Error(payload.detail || `HTTP ${response.status}`);
-            }
-            tableMsg.textContent = "Option auto-telechargement mise a jour.";
-            await refreshOverview();
-          } catch (error) {
-            tableMsg.textContent = `Erreur update auto DL: ${error}`;
-          } finally {
-            btn.disabled = false;
-          }
-        });
-      });
-
-      mangaBody.querySelectorAll("button[data-action='delete']").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          const mangaId = Number(btn.dataset.id);
-          const ok = confirm("Supprimer ce manga du suivi ?");
-          if (!ok) return;
-          btn.disabled = true;
-          try {
-            const response = await fetch(`/library/mangas/${mangaId}`, { method: "DELETE" });
-            if (!response.ok) {
-              const payload = await response.json().catch(() => ({}));
-              throw new Error(payload.detail || `HTTP ${response.status}`);
-            }
-            if (selectedMangaId === mangaId) {
-              selectedMangaId = null;
-            }
-            tableMsg.textContent = "Manga supprime du suivi.";
-            await refreshOverview();
-          } catch (error) {
-            tableMsg.textContent = `Erreur suppression: ${error}`;
-          } finally {
-            btn.disabled = false;
-          }
-        });
-      });
-
-      renderUnlinked();
-      renderSelected();
-    }
-
-    function renderUnlinked() {
-      unlinkedList.innerHTML = "";
-      if (!overview || !overview.unlinked_dirs.length) {
-        unlinkedList.innerHTML = '<div class="small-item">Aucun dossier non lie.</div>';
-        return;
-      }
-      for (const item of overview.unlinked_dirs) {
-        const div = document.createElement("div");
-        div.className = "small-item";
-        div.textContent = `${item.local_subdir} (${item.pdf_count} PDFs)`;
-        unlinkedList.appendChild(div);
-      }
-    }
-
-    function renderSelected() {
-      missingList.innerHTML = "";
-      if (!overview || !overview.mangas.length) {
-        selectedTitle.textContent = "-";
-        missingList.innerHTML = '<div class="small-item">Pas de manga selectionne.</div>';
-        return;
-      }
-
-      const manga = overview.mangas.find((x) => x.id === selectedMangaId) || overview.mangas[0];
-      selectedMangaId = manga.id;
-      selectedTitle.textContent = manga.title;
-
-      if (!manga.missing_chapters.length) {
-        missingList.innerHTML = '<div class="small-item">Aucun chapitre manquant.</div>';
-        return;
-      }
-
-      for (const chapter of manga.missing_chapters) {
-        const div = document.createElement("div");
-        div.className = "small-item";
-        div.textContent = `${chapter.chapter_title} - ${chapter.chapter_url}`;
-        missingList.appendChild(div);
+        mangaGrid.appendChild(card);
       }
     }
 
@@ -614,6 +242,7 @@
     refreshOverview().catch((error) => {
       tableMsg.textContent = `Erreur initiale: ${error}`;
     });
+
     setInterval(() => {
       refreshOverview().catch(() => null);
     }, 30000);
