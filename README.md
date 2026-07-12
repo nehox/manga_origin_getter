@@ -122,34 +122,34 @@ Puis relancer le serveur.
 - POST /settings/purge
 - GET /library/overview
 - GET /library/mangas/{manga_id}
-- POST /library/settings
+- GET /library/roots
+- POST /library/roots
+- DELETE /library/roots/{root_id}
 - POST /library/mangas
 - PATCH /library/mangas/{manga_id}
 - POST /library/mangas/{manga_id}/scan
+- POST /library/mangas/{manga_id}/download-missing
+- DELETE /library/mangas/{manga_id}
 - POST /library/scan-all
 
 Le bouton "Relancer les chapitres failed" dans l'interface relance uniquement les chapitres en echec du job selectionne.
 
-Page settings:
+Pages:
 
-- /settings.html
-
-Page bibliotheque (nouvelle home):
-
-- /
-
-Page telechargements (ancienne home):
-
-- /downloads.html
-
-Cette page permet de visualiser les stats de stockage et de purger les donnees locales de l'application.
+- `/` : catalogue (home Bibliotheque)
+- `/add-manga.html` : ajouter un manga suivi via URL
+- `/link-manga.html` : lier un dossier local deja present a une URL d'oeuvre
+- `/manga-detail.html?id=...` : detail d'un manga (chapitres + statut, actions scan/telechargement)
+- `/downloads.html` : jobs de recuperation ponctuels (ancienne home)
+- `/settings.html` (Parametres) : gestion des racines de bibliotheque, stats de stockage, purge des donnees locales
 
 Bibliotheque:
 
-- path global unique pour indexer les mangas deja telecharges
+- persistance SQLite (`backend/data/library.db`)
+- plusieurs racines de bibliotheque possibles (gerees depuis la page Parametres), chaque manga suivi est rattache a une racine
 - memorisation des URLs oeuvre suivies
-- detection chapitres presents/manquants et gaps numeriques
-- auto-scan planifie par manga via `scan_interval_minutes`
+- detection chapitres presents/manquants/indisponibles et gaps numeriques, avec table de statut par chapitre sur la page detail
+- auto-scan planifie par manga via `scan_interval_minutes`, avec telechargement auto optionnel des chapitres manquants
 
 ### POST /jobs exemple
 
@@ -165,15 +165,16 @@ Bibliotheque:
 
 ## Limites du démarrage
 
-- Repository en mémoire (pas de base persistante encore)
+- Jobs de recuperation ponctuels toujours en repository memoire (pas d'historique persistant), seule la bibliotheque est en SQLite
 - Pas encore de workers Celery/Redis
-- Adaptateur fourni pour mangas-origines.fr
+- Adaptateurs fournis pour mangas-origines.fr et hentai-origines.com
 - Certaines pages peuvent etre bloquees par Cloudflare sans cookie de session valide
 - Pas encore de retries avancés ni rate-limiter centralisé
+- Pas de suite de tests automatises
 
 ## Prochaine itération
 
-- Ajouter stockage SQL (jobs + historique)
+- Ajouter stockage SQL pour les jobs (historique persistant)
 - Ajouter file de tâches Celery + Redis
 - Ajouter retries/backoff et classification erreurs
 - Ajouter tests unitaires et intégration
