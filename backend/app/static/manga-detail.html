@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Detail Manga - Manga Origin Getter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#14171d; --line:#30374a; --text:#e7edf7; --muted:#9aa8bf; --accent:#f5b126; --bad:#ea5a58; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; min-height:100%; font-family:"Manrope",sans-serif; background:var(--bg); color:var(--text); }
+    .app { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
+    .sidebar { border-right:1px solid var(--line); background:linear-gradient(180deg,#191d25,#161a21); padding:14px 12px; display:grid; grid-template-rows:auto auto 1fr; gap:14px; }
+    .logo { display:flex; align-items:center; gap:8px; font-weight:800; color:#f7f9fe; }
+    .logo-mark { width:26px; height:26px; border-radius:6px; background:linear-gradient(140deg,var(--accent),#d97f00); display:inline-flex; align-items:center; justify-content:center; color:#241800; font-weight:900; font-size:.78rem; }
+    .menu { display:grid; gap:5px; }
+    .menu a { color:#d5deeb; text-decoration:none; padding:9px 10px; border-radius:8px; font-size:.9rem; border:1px solid transparent; }
+    .menu a.active { background:#252c3a; border-color:#374058; color:#fff; }
+    .menu a:hover { border-color:#333b4d; background:#222836; }
+    .wrap { padding: 14px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+    button { border:1px solid #434f68; background:#2a3243; color:#edf2fb; padding:8px 10px; border-radius:7px; font:inherit; cursor:pointer; }
+    .danger { background:#5b2931; border-color:#794149; color:#ffdfe3; }
+    .accent { background:linear-gradient(120deg,#f5b126,#e58d10); border-color:#e79918; color:#241700; }
+    .hero { border:1px solid var(--line); border-radius:10px; background:linear-gradient(120deg,#1f2a3d,#2c233d 42%,#3f251f); padding:14px; display:grid; gap:10px; }
+    .hero h1 { margin:0; font-size:2rem; }
+    .hero p { margin:0; color:#c8d4e6; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .box { border:1px solid var(--line); border-radius:10px; background:#1d2330; padding:10px; display:grid; gap:8px; }
+    .box h2 { margin:0; font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:#98abc7; }
+    .row { display:grid; grid-template-columns: 1fr auto; gap:8px; }
+    input { border:1px solid #3a4357; background:#10141c; color:#edf2fb; padding:8px 9px; border-radius:7px; }
+    .meta { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .m { border:1px solid #37435a; border-radius:7px; padding:7px; background:#232a38; }
+    .m .k { color:#97a8c4; font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; }
+    .m .v { font-size:.86rem; word-break:break-word; }
+    .list { border:1px solid #364058; border-radius:8px; background:#1d2431; max-height: 300px; overflow:auto; padding:8px; display:grid; gap:7px; }
+    .line { font-size:.83rem; color:#d1dcee; border-left:2px solid #43516d; padding-left:7px; word-break:break-word; }
+    .msg { color:#9fb0ca; font-size:.84rem; min-height:1.1em; }
+    .table-wrap { max-height: 360px; overflow:auto; border:1px solid #364058; border-radius:8px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:7px 9px; border-bottom:1px solid #2b3245; font-size:.84rem; vertical-align:middle; }
+    th { position:sticky; top:0; background:#202838; color:#a4b5cc; font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; }
+    td a { color:#53a3ff; font-weight:700; text-decoration:none; }
+    td a:hover { text-decoration:underline; }
+    .chip { display:inline-flex; font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; border:1px solid; border-radius:20px; padding:3px 8px; font-weight:800; background:#141923; }
+    .chip.downloaded { color:#3ac97b; border-color:#3e8e63; }
+    .chip.missing { color:#f4a23a; border-color:#9b7a3d; }
+    .chip.unavailable { color:#9aa8bf; border-color:#4a5568; }
+    @media (max-width: 900px) { .grid,.meta,.row { grid-template-columns:1fr; } }
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .menu { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .menu { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-mark">MO</span><span>Manga Origin</span></div>
+      <nav class="menu">
+        <a href="/">Catalogue</a>
+        <a href="/add-manga.html">Ajouter un manga</a>
+        <a href="/link-manga.html">Lier un manga</a>
+        <a href="/downloads.html">Telechargements</a>
+        <a href="/settings.html">Parametres</a>
+      </nav>
+    </aside>
+
+    <main class="wrap">
+    <section class="hero">
+      <h1 id="title">Manga</h1>
+      <p id="desc">Chargement...</p>
+      <div class="actions">
+        <button id="scanBtn">Scanner</button>
+        <button id="downloadBtn">Telecharger manquants</button>
+        <button id="autoBtn">Auto ON/OFF</button>
+        <button id="deleteBtn" class="danger">Supprimer</button>
+      </div>
+      <div id="actionMsg" class="msg"></div>
+    </section>
+
+    <section class="grid">
+      <article class="box">
+        <h2>Parametres scan</h2>
+        <div class="row">
+          <input id="intervalInput" type="number" min="5" value="60" />
+          <button id="saveScheduleBtn">Sauver intervalle</button>
+        </div>
+        <div class="msg">Le dossier local et sa racine sont affiches ci-dessous (champs non editables).</div>
+      </article>
+    </section>
+
+    <section class="meta">
+      <div class="m"><div class="k">Source</div><div id="metaSource" class="v">-</div></div>
+      <div class="m"><div class="k">Racine bibliotheque</div><div id="metaRoot" class="v">-</div></div>
+      <div class="m"><div class="k">Dossier local</div><div id="metaSubdir" class="v">-</div></div>
+      <div class="m"><div class="k">Cadence scan</div><div id="metaInterval" class="v">-</div></div>
+      <div class="m"><div class="k">Dernier scan</div><div id="metaLastScan" class="v">-</div></div>
+    </section>
+
+    <section class="box">
+      <h2>Chapitres</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Chapitre</th>
+              <th>Statut</th>
+              <th>Lien</th>
+            </tr>
+          </thead>
+          <tbody id="chaptersBody"></tbody>
+        </table>
+      </div>
+    </section>
+    </main>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const mangaId = Number(params.get("id") || "0");
+
+    const titleEl = document.getElementById("title");
+    const descEl = document.getElementById("desc");
+    const actionMsg = document.getElementById("actionMsg");
+
+    const intervalInput = document.getElementById("intervalInput");
+
+    const metaSource = document.getElementById("metaSource");
+    const metaRoot = document.getElementById("metaRoot");
+    const metaSubdir = document.getElementById("metaSubdir");
+    const metaInterval = document.getElementById("metaInterval");
+    const metaLastScan = document.getElementById("metaLastScan");
+    const chaptersBody = document.getElementById("chaptersBody");
+
+    const scanBtn = document.getElementById("scanBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const autoBtn = document.getElementById("autoBtn");
+    const deleteBtn = document.getElementById("deleteBtn");
+    const saveScheduleBtn = document.getElementById("saveScheduleBtn");
+
+    let current = null;
+
+    if (!mangaId) {
+      titleEl.textContent = "Manga introuvable";
+      descEl.textContent = "ID manga manquant dans l'URL.";
+      [scanBtn, downloadBtn, autoBtn, deleteBtn, saveScheduleBtn].forEach((b) => { b.disabled = true; });
+    }
+
+    saveScheduleBtn.addEventListener("click", async () => {
+      if (!current) return;
+      const interval = Number(intervalInput.value || "60");
+      saveScheduleBtn.disabled = true;
+      try {
+        const response = await fetch(`/library/mangas/${current.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scan_interval_minutes: interval })
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+        actionMsg.textContent = "Cadence scan mise a jour.";
+        await load();
+      } catch (error) {
+        actionMsg.textContent = `Erreur update: ${error}`;
+      } finally {
+        saveScheduleBtn.disabled = false;
+      }
+    });
+
+    scanBtn.addEventListener("click", async () => {
+      if (!current) return;
+      scanBtn.disabled = true;
+      try {
+        const response = await fetch(`/library/mangas/${current.id}/scan`, { method: "POST" });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+        actionMsg.textContent = "Scan termine.";
+        await load();
+      } catch (error) {
+        actionMsg.textContent = `Erreur scan: ${error}`;
+      } finally {
+        scanBtn.disabled = false;
+      }
+    });
+
+    downloadBtn.addEventListener("click", async () => {
+      if (!current) return;
+      downloadBtn.disabled = true;
+      try {
+        const response = await fetch(`/library/mangas/${current.id}/download-missing`, { method: "POST" });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        actionMsg.textContent = `Telechargement termine. ${payload.downloaded_count || 0} chapitre(s) telecharge(s).`;
+        await load();
+      } catch (error) {
+        actionMsg.textContent = `Erreur telechargement: ${error}`;
+      } finally {
+        downloadBtn.disabled = false;
+      }
+    });
+
+    autoBtn.addEventListener("click", async () => {
+      if (!current) return;
+      autoBtn.disabled = true;
+      try {
+        const response = await fetch(`/library/mangas/${current.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ auto_download_missing: !current.auto_download_missing })
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+        actionMsg.textContent = "Option auto telechargement mise a jour.";
+        await load();
+      } catch (error) {
+        actionMsg.textContent = `Erreur auto: ${error}`;
+      } finally {
+        autoBtn.disabled = false;
+      }
+    });
+
+    deleteBtn.addEventListener("click", async () => {
+      if (!current) return;
+      if (!confirm(`Supprimer ${current.title} du suivi ?`)) return;
+      deleteBtn.disabled = true;
+      try {
+        const response = await fetch(`/library/mangas/${current.id}`, { method: "DELETE" });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.detail || `HTTP ${response.status}`);
+        }
+        window.location.href = "/";
+      } catch (error) {
+        actionMsg.textContent = `Erreur suppression: ${error}`;
+      } finally {
+        deleteBtn.disabled = false;
+      }
+    });
+
+    async function load() {
+      if (!mangaId) return;
+
+      const mangaRes = await fetch(`/library/mangas/${mangaId}`);
+      if (!mangaRes.ok) {
+        const payload = await mangaRes.json().catch(() => ({}));
+        throw new Error(payload.detail || `HTTP ${mangaRes.status}`);
+      }
+
+      const manga = await mangaRes.json();
+      current = manga;
+
+      titleEl.textContent = manga.title;
+      descEl.textContent = `${manga.title} est suivi depuis ${manga.source_url}. ${manga.missing_total} chapitre(s) manquant(s) sur ${manga.remote_total}.`;
+
+      intervalInput.value = String(manga.scan_interval_minutes || 60);
+      metaSource.textContent = manga.source_url || "-";
+      metaRoot.textContent = manga.root_path || "-";
+      metaSubdir.textContent = manga.local_subdir || "-";
+      metaInterval.textContent = `${manga.scan_interval_minutes} min`;
+      metaLastScan.textContent = manga.last_scan_at || "-";
+      autoBtn.textContent = manga.auto_download_missing ? "Auto OFF" : "Auto ON";
+
+      chaptersBody.innerHTML = "";
+      const chapters = manga.chapters || [];
+      if (!chapters.length) {
+        chaptersBody.innerHTML = '<tr><td colspan="4">Aucun chapitre detecte pour le moment.</td></tr>';
+      } else {
+        const statusLabels = { downloaded: "Telecharge", missing: "Manquant", unavailable: "Indisponible" };
+        for (const chapter of chapters) {
+          const row = document.createElement("tr");
+          const statusClass = chapter.status || "missing";
+          const statusLabel = statusLabels[statusClass] || statusClass;
+          row.innerHTML = `
+            <td>${chapter.chapter_number != null ? chapter.chapter_number : "-"}</td>
+            <td>${escapeHtml(chapter.chapter_title)}</td>
+            <td><span class="chip ${statusClass}">${statusLabel}</span></td>
+            <td><a href="${escapeHtml(chapter.chapter_url)}" target="_blank" rel="noopener">Ouvrir</a></td>
+          `;
+          chaptersBody.appendChild(row);
+        }
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    load().catch((error) => {
+      actionMsg.textContent = `Erreur initiale: ${error}`;
+    });
+  </script>
+</body>
+</html>
