@@ -205,14 +205,14 @@
           throw new Error(payload.detail || `HTTP ${response.status}`);
         }
         const payload = await response.json();
-        actionMsg.textContent = `Telechargement termine. ${payload.downloaded_count || 0} chapitre(s) telecharge(s).`;
-        await load();
+        actionMsg.innerHTML = `Telechargement lance pour ${payload.missing_count} chapitre(s). Suis la progression dans <a href="/downloads.html" style="color:var(--accent);">Telechargements</a>.`;
       } catch (error) {
         actionMsg.textContent = `Erreur telechargement: ${error}`;
       } finally {
         downloadBtn.disabled = false;
       }
     });
+
 
     autoBtn.addEventListener("click", async () => {
       if (!current) return;

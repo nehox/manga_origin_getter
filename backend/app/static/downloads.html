@@ -270,6 +270,7 @@
 
       if (!currentJobId) {
         currentJobId = jobs[0].id;
+        startDetailPoll(currentJobId);
       }
 
       for (const job of jobs) {
@@ -304,7 +305,8 @@
       clearInterval(detailTimer);
       chapterBody.innerHTML = "";
       progressFill.style.width = "0%";
-      detailTimer = setInterval(async () => {
+
+      async function fetchDetail() {
         try {
           const response = await fetch(`/jobs/${jobId}`);
           if (!response.ok) {
@@ -354,7 +356,10 @@
           retryFailedBtn.disabled = true;
           clearInterval(detailTimer);
         }
-      }, 2500);
+      }
+
+      fetchDetail();
+      detailTimer = setInterval(fetchDetail, 2500);
     }
 
     function escapeHtml(value) {

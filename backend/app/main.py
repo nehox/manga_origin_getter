@@ -29,7 +29,7 @@ data_dir = Path(__file__).resolve().parents[1] / "data" / "jobs"
 data_dir.mkdir(parents=True, exist_ok=True)
 runner = JobRunner(repository=repository, registry=registry, data_dir=data_dir)
 library_store = LibraryStore(default_library_db_path())
-library_service = LibraryService(library_store, registry)
+library_service = LibraryService(library_store, registry, job_runner=runner)
 library_scheduler = LibraryScheduler(library_service)
 
 
@@ -178,7 +178,7 @@ async def library_manga_scan(manga_id: int) -> dict:
 @app.post("/library/mangas/{manga_id}/download-missing")
 async def library_download_missing(manga_id: int) -> dict:
     try:
-        return await library_service.download_missing_chapters(manga_id)
+        return await library_service.start_missing_chapters_job(manga_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except RuntimeError as exc:

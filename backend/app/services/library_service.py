@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 from app.adapters.registry import AdapterRegistry
 from app.services.downloader import download_images
+from app.services.job_runner import JobRunner
 from app.services.pdf_builder import build_pdf_from_images
 from app.services.library_store import LibraryStore
 from app.services.slug import to_slug
@@ -22,9 +23,10 @@ def to_iso(dt: datetime) -> str:
 
 
 class LibraryService:
-    def __init__(self, store: LibraryStore, registry: AdapterRegistry) -> None:
+    def __init__(self, store: LibraryStore, registry: AdapterRegistry, job_runner: Optional[JobRunner] = None) -> None:
         self.store = store
         self.registry = registry
+        self.job_runner = job_runner
 
     def list_library_roots(self) -> list[dict[str, Any]]:
         roots = self.store.list_roots()
@@ -295,6 +297,66 @@ class LibraryService:
         details = self.get_manga_details(manga_id)
         details["downloaded_count"] = downloaded
         return details
+
+    async def start_missing_chapters_job(self, manga_id: int) -> dict[str, Any]:
+        """Launch a tracked background job to download this manga's missing chapters.
+
+        Unlike ``download_missing_chapters`` (used internally by auto-scan), this
+        creates a regular job entry so the download shows up in the Telechargements
+        page/queue just like manual jobs.
+        """
+        if self.job_runner is None:
+            raise RuntimeError("Le systeme de jobs n'est pas configure")
+
+        manga = self.store.get_manga(manga_id)
+        if not manga:
+            raise ValueError("Manga not found")
+
+        root_id = manga.get("root_id")
+        if root_id is None:
+            raise RuntimeError("Aucune racine de bibliotheque associee a ce manga")
+        root = self.get_root_path(int(root_id))
+
+        local_subdir = str(manga["local_subdir"])
+        target_dir = root / local_subdir
+
+        chapters = self.store.list_chapters(manga_id)
+        missing = [
+            chapter
+            for chapter in chapters
+            if int(chapter["remote_present"]) == 1 and int(chapter["local_present"]) == 0
+        ]
+        if not missing:
+            raise ValueError("Aucun chapitre manquant a telecharger")
+
+        missing_by_slug = {str(chapter["chapter_slug"]): chapter for chapter in missing}
+
+        def on_chapter_done(chapter_slug: str) -> None:
+            chapter = missing_by_slug.get(chapter_slug)
+            if not chapter:
+                return
+            self.store.upsert_chapter(
+                manga_id=manga_id,
+                chapter_url=str(chapter["chapter_url"]),
+                chapter_slug=chapter_slug,
+                chapter_title=str(chapter["chapter_title"]),
+                chapter_number=chapter["chapter_number"],
+                remote_present=True,
+                local_present=True,
+            )
+
+        job = await self.job_runner.create_tracked_download_job(
+            source_url=str(manga["source_url"]),
+            work_title=str(manga["title"]),
+            target_dir=target_dir,
+            chapters=[
+                (str(chapter["chapter_title"]), str(chapter["chapter_slug"]), str(chapter["chapter_url"]))
+                for chapter in missing
+            ],
+            max_concurrency=4,
+            on_chapter_done=on_chapter_done,
+        )
+        return {"job_id": job.id, "missing_count": len(missing)}
 
     def list_unlinked_local_dirs(self) -> list[dict[str, Any]]:
         tracked = {

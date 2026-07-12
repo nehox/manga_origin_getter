@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 from uuid import uuid4
 
 from app.adapters.registry import AdapterRegistry
@@ -42,6 +42,93 @@ class JobRunner:
         self._tasks[job.id] = task
         task.add_done_callback(lambda _: self._tasks.pop(job.id, None))
         return job
+
+    async def create_tracked_download_job(
+        self,
+        *,
+        source_url: str,
+        work_title: str,
+        target_dir: Path,
+        chapters: list[tuple[str, str, str]],
+        max_concurrency: int = 4,
+        on_chapter_done: Optional[Callable[[str], None]] = None,
+    ) -> JobState:
+        """Create a background job whose chapter PDFs are written directly into ``target_dir``.
+
+        Used for library "download missing chapters" actions so they show up in the
+        regular job queue/downloads page instead of running invisibly.
+        """
+        target_dir.mkdir(parents=True, exist_ok=True)
+        job = JobState(
+            id=str(uuid4()),
+            source_url=source_url,
+            status=JobStatus.PENDING,
+            work_title=work_title,
+            total_chapters=len(chapters),
+            max_concurrency=max_concurrency,
+            output_dir=str(target_dir),
+            chapter_artifacts=[
+                ChapterArtifact(title=title, slug=slug, source_url=url, status=JobStatus.PENDING)
+                for (title, slug, url) in chapters
+            ],
+        )
+        await self.repository.create(job)
+
+        task = asyncio.create_task(
+            self._run_tracked_download_job(job.id, target_dir, max_concurrency, on_chapter_done),
+            name=f"job-library-{job.id}",
+        )
+        self._tasks[job.id] = task
+        task.add_done_callback(lambda _: self._tasks.pop(job.id, None))
+        return job
+
+    async def _run_tracked_download_job(
+        self,
+        job_id: str,
+        target_dir: Path,
+        max_concurrency: int,
+        on_chapter_done: Optional[Callable[[str], None]],
+    ) -> None:
+        async with self._job_slots:
+            job = await self.repository.get(job_id)
+            if not job:
+                return
+
+            try:
+                for chapter in list(job.chapter_artifacts):
+                    await self._run_chapter(
+                        job_id,
+                        chapter.title,
+                        chapter.slug,
+                        str(chapter.source_url),
+                        max_concurrency,
+                        pdf_dir=target_dir,
+                    )
+                    if on_chapter_done:
+                        refreshed = await self.repository.get(job_id)
+                        updated = next(
+                            (item for item in refreshed.chapter_artifacts if item.slug == chapter.slug),
+                            None,
+                        ) if refreshed else None
+                        if updated and updated.status == JobStatus.DONE:
+                            on_chapter_done(chapter.slug)
+
+                job = await self.repository.get(job_id)
+                if not job:
+                    return
+                if any(chapter.status == JobStatus.FAILED for chapter in job.chapter_artifacts):
+                    job.status = JobStatus.FAILED
+                    if not job.error:
+                        job.error = "One or more chapters failed"
+                else:
+                    job.status = JobStatus.DONE
+                await self.repository.update(job)
+            except Exception as exc:
+                job = await self.repository.get(job_id)
+                if job:
+                    job.status = JobStatus.FAILED
+                    job.error = str(exc)
+                    await self.repository.update(job)
 
     async def _run_job_background(self, job_id: str, source_url: str, max_concurrency: int) -> None:
         async with self._job_slots:
@@ -223,6 +310,8 @@ class JobRunner:
         chapter_slug: str,
         chapter_url: str,
         max_concurrency: int,
+        *,
+        pdf_dir: Optional[Path] = None,
     ) -> None:
         job = await self.repository.get(job_id)
         if not job:
@@ -242,7 +331,7 @@ class JobRunner:
 
             chapter_dir = self.data_dir / job_id / chapter_slug
             image_dir = chapter_dir / "images"
-            pdf_dir = self._job_pdf_dir(job)
+            target_pdf_dir = pdf_dir if pdf_dir is not None else self._job_pdf_dir(job)
 
             image_paths = await download_images(image_urls, image_dir, max_concurrency=max_concurrency)
 
@@ -251,7 +340,7 @@ class JobRunner:
             job.status = JobStatus.ASSEMBLING
             await self.repository.update(job)
 
-            pdf_path = pdf_dir / f"{chapter_slug}.pdf"
+            pdf_path = target_pdf_dir / f"{chapter_slug}.pdf"
             build_pdf_from_images(image_paths, pdf_path)
 
             chapter.status = JobStatus.DONE
