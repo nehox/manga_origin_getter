@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: manga-origine-getteur:latest
+    container_name: manga-origine-getteur
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKGROUND_JOB_WORKERS=2
+      - MANGA_SOURCE_COOKIE=${MANGA_SOURCE_COOKIE:-}
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./library:/library

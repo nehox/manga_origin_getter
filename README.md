@@ -72,6 +72,33 @@ Ouvrir ensuite:
 - http://127.0.0.1:8000/ (home Bibliotheque)
 - http://127.0.0.1:8000/downloads.html (page telechargements)
 
+## Lancer avec Docker
+
+```bash
+docker compose up -d --build
+```
+
+Ouvrir ensuite http://127.0.0.1:8000/
+
+Volumes montes:
+
+- `./backend/data` -> donnees persistantes (base SQLite, jobs) sur le host
+- `./library` -> dossier a utiliser comme racine de bibliotheque dans le container (chemin `/library`)
+
+Ajoute `/library` comme racine dans la page Parametres, puis copie tes mangas dans `./library` sur le host.
+
+Variables d'environnement optionnelles (dans un fichier `.env` a la racine du repo):
+
+```bash
+MANGA_SOURCE_COOKIE=...
+```
+
+Arreter le stack:
+
+```bash
+docker compose down
+```
+
 ## Acces source protege (Cloudflare)
 
 Selon les moments, le site source peut renvoyer HTTP 403 via Cloudflare aux clients non navigants.

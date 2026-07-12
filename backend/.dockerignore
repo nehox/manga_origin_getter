@@ -1,0 +1,8 @@
+# Docker build context ignores
+.venv/
+data/
+manga_origine_getteur.egg-info/
+__pycache__/
+**/__pycache__/
+*.pyc
+Downloads/
