@@ -1,0 +1,70 @@
+{
+  "agent": "nettoyeur",
+  "agents": {
+    "nettoyeur": {
+      "description": "Supprime le code mort et les fichiers orphelins",
+      "mode": "subagent",
+      "model": "deepseek-v4-flash-free",
+      "temperature": 0.0,
+      "max_steps": 20,
+      "permission": {
+        "edit": {
+          "backend/app/models.py": true,
+          "backend/setup.py": true,
+          ".opencode/agents/*.md": true,
+          "AGENTS.md": true,
+          "WORKFLOW_STATE.md": true
+        },
+        "bash": "deny"
+      }
+    },
+    "refactorer": {
+      "description": "Factorise la logique dupliquee et cree les modules utilitares",
+      "mode": "subagent",
+      "model": "deepseek-v4-flash-free",
+      "temperature": 0.1,
+      "max_steps": 30,
+      "permission": {
+        "edit": {
+          "backend/app/services/*.py": true,
+          "backend/app/main.py": true,
+          "backend/app/models.py": true,
+          "WORKFLOW_STATE.md": true
+        },
+        "bash": "ask"
+      }
+    },
+    "frontender": {
+      "description": "Factorise le CSS/JS partage des 6 pages HTML",
+      "mode": "subagent",
+      "model": "deepseek-v4-flash-free",
+      "temperature": 0.1,
+      "max_steps": 30,
+      "permission": {
+        "edit": {
+          "backend/app/static/**": true,
+          "WORKFLOW_STATE.md": true
+        },
+        "bash": "deny"
+      }
+    },
+    "testeur": {
+      "description": "Ajoute les tests automatises avec pytest",
+      "mode": "subagent",
+      "model": "deepseek-v4-flash-free",
+      "temperature": 0.0,
+      "max_steps": 30,
+      "permission": {
+        "edit": {
+          "backend/tests/**": true,
+          "backend/pyproject.toml": true,
+          "WORKFLOW_STATE.md": true
+        },
+        "bash": {
+          "pytest *": true,
+          "python -m pytest *": true
+        }
+      }
+    }
+  }
+}

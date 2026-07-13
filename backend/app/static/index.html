@@ -204,9 +204,12 @@
         const autoChip = manga.auto_download_missing
           ? '<span class="chip info">Auto ON</span>'
           : '<span class="chip warn">Auto OFF</span>';
+        const coverUrl = manga.cover_url || "";
+        const coverStyle = coverUrl ? `background-image:url(${escapeHtml(coverUrl)});background-size:cover;background-position:center;` : "";
 
         card.innerHTML = `
-          <div class="poster">
+          <div class="poster" style="${coverStyle}">
+            ${coverUrl ? `<img src="${escapeHtml(coverUrl)}" alt="" style="display:none" />` : ""}
             <span class="status-pill ${statusClass}">${statusText}</span>
             <div class="poster-text">${escapeHtml(manga.title)}</div>
           </div>

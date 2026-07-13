@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
@@ -18,4 +19,7 @@ class SourceAdapter:
         raise NotImplementedError
 
     async def extract_image_urls(self, chapter_url: str) -> list[str]:
+        raise NotImplementedError
+
+    async def extract_cover_url(self, source_url: str) -> Optional[str]:
         raise NotImplementedError

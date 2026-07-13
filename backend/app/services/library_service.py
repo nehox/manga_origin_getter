@@ -12,14 +12,7 @@ from app.services.job_runner import JobRunner
 from app.services.pdf_builder import build_pdf_from_images
 from app.services.library_store import LibraryStore
 from app.services.slug import to_slug
-
-
-def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def to_iso(dt: datetime) -> str:
-    return dt.replace(microsecond=0).isoformat()
+from app.services.utils import utc_now, to_iso
 
 
 class LibraryService:
@@ -173,6 +166,7 @@ class LibraryService:
 
         try:
             work_title, chapters = await adapter.discover_chapters(source_url)
+            cover_url = await adapter.extract_cover_url(source_url)
             local_subdir = str(manga["local_subdir"])
             local_dir = root / local_subdir
             local_slugs = self._local_chapter_slugs(local_dir)
@@ -222,6 +216,7 @@ class LibraryService:
                 local_subdir=local_subdir,
                 scan_interval_minutes=int(manga["scan_interval_minutes"]),
                 auto_download_missing=bool(int(manga.get("auto_download_missing") or 0)),
+                cover_url=cover_url,
             )
 
             self.store.mark_scan_result(

@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import sqlite3
 import threading
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-
-def utcnow_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+from app.services.utils import utcnow_iso
 
 
 class LibraryStore:
@@ -81,6 +78,8 @@ class LibraryStore:
                 )
             if "root_id" not in columns:
                 conn.execute("ALTER TABLE library_manga ADD COLUMN root_id INTEGER")
+            if "cover_url" not in columns:
+                conn.execute("ALTER TABLE library_manga ADD COLUMN cover_url TEXT")
             conn.commit()
             self._migrate_legacy_root(conn)
 
@@ -184,6 +183,7 @@ class LibraryStore:
         scan_interval_minutes: int,
         auto_download_missing: bool,
         root_id: Optional[int] = None,
+        cover_url: Optional[str] = None,
     ) -> int:
         now = utcnow_iso()
         with self._lock, self._connect() as conn:
@@ -199,7 +199,7 @@ class LibraryStore:
                         """
                         UPDATE library_manga
                         SET title = ?, slug = ?, local_subdir = ?, scan_interval_minutes = ?,
-                            auto_download_missing = ?, root_id = ?, updated_at = ?
+                            auto_download_missing = ?, root_id = ?, cover_url = ?, updated_at = ?
                         WHERE id = ?
                         """,
                         (
@@ -209,6 +209,7 @@ class LibraryStore:
                             scan_interval_minutes,
                             1 if auto_download_missing else 0,
                             root_id,
+                            cover_url,
                             now,
                             manga_id,
                         ),
@@ -218,7 +219,7 @@ class LibraryStore:
                         """
                         UPDATE library_manga
                         SET title = ?, slug = ?, local_subdir = ?, scan_interval_minutes = ?,
-                            auto_download_missing = ?, updated_at = ?
+                            auto_download_missing = ?, cover_url = ?, updated_at = ?
                         WHERE id = ?
                         """,
                         (
@@ -227,6 +228,7 @@ class LibraryStore:
                             local_subdir,
                             scan_interval_minutes,
                             1 if auto_download_missing else 0,
+                            cover_url,
                             now,
                             manga_id,
                         ),
@@ -236,9 +238,9 @@ class LibraryStore:
                     """
                     INSERT INTO library_manga(
                         title, slug, source_url, local_subdir, scan_interval_minutes,
-                        auto_download_missing, root_id,
+                        auto_download_missing, root_id, cover_url,
                         created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         title,
@@ -248,6 +250,7 @@ class LibraryStore:
                         scan_interval_minutes,
                         1 if auto_download_missing else 0,
                         root_id,
+                        cover_url,
                         now,
                         now,
                     ),
@@ -321,7 +324,7 @@ class LibraryStore:
             rows = conn.execute(
                 """
                 SELECT id, title, slug, source_url, local_subdir, scan_interval_minutes,
-                      auto_download_missing, root_id,
+                      auto_download_missing, root_id, cover_url,
                        last_scan_at, next_scan_at, last_scan_status, last_scan_error
                 FROM library_manga
                 ORDER BY updated_at DESC, id DESC
@@ -334,7 +337,7 @@ class LibraryStore:
             row = conn.execute(
                 """
                 SELECT id, title, slug, source_url, local_subdir, scan_interval_minutes,
-                      auto_download_missing, root_id,
+                      auto_download_missing, root_id, cover_url,
                        last_scan_at, next_scan_at, last_scan_status, last_scan_error
                 FROM library_manga
                 WHERE id = ?

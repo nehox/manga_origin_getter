@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel, Field, HttpUrl
@@ -60,12 +59,6 @@ class JobView(BaseModel):
     completed_chapters: int
     output_dir: Optional[str]
     error: Optional[str]
-
-
-class JobPaths(BaseModel):
-    base_dir: Path
-    images_dir: Path
-    pdf_dir: Path
 
 
 class LibraryRootCreateRequest(BaseModel):

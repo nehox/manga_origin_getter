@@ -18,6 +18,7 @@ from app.services.job_runner import JobRunner
 from app.services.library_scheduler import LibraryScheduler
 from app.services.library_service import LibraryService
 from app.services.library_store import LibraryStore
+from app.services.utils import build_job_view
 from app.storage.library_db import default_library_db_path
 from app.storage.repository import InMemoryJobRepository
 
@@ -51,35 +52,14 @@ async def healthz() -> dict[str, str]:
 @app.post("/jobs", response_model=JobView, status_code=202)
 async def create_job(request: JobCreateRequest) -> JobView:
     job = await runner.create_job(request)
-    return JobView(
-        id=job.id,
-        source_url=job.source_url,
-        status=job.status,
-        work_title=job.work_title,
-        total_chapters=job.total_chapters,
-        completed_chapters=job.completed_chapters,
-        output_dir=job.output_dir,
-        error=job.error,
-    )
+    return build_job_view(job)
 
 
 @app.get("/jobs", response_model=list[JobView])
 async def list_jobs() -> list[JobView]:
     jobs = await repository.list()
     jobs.reverse()
-    return [
-        JobView(
-            id=job.id,
-            source_url=job.source_url,
-            status=job.status,
-            work_title=job.work_title,
-            total_chapters=job.total_chapters,
-            completed_chapters=job.completed_chapters,
-            output_dir=job.output_dir,
-            error=job.error,
-        )
-        for job in jobs
-    ]
+    return [build_job_view(job) for job in jobs]
 
 
 @app.get("/jobs/{job_id}")
@@ -230,16 +210,7 @@ async def retry_failed_chapters(job_id: str) -> JobView:
     except RuntimeError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
-    return JobView(
-        id=job.id,
-        source_url=job.source_url,
-        status=job.status,
-        work_title=job.work_title,
-        total_chapters=job.total_chapters,
-        completed_chapters=job.completed_chapters,
-        output_dir=job.output_dir,
-        error=job.error,
-    )
+    return build_job_view(job)
 
 
 @app.get("/jobs/{job_id}/chapters/{chapter_slug}/pdf")

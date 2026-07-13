@@ -218,6 +218,15 @@ class MangasOriginesAdapter(SourceAdapter):
         numeric = self._chapter_numeric_key(chapter_url)
         return (numeric[0] * 10000 + numeric[1]), chapter_url
 
+    async def extract_cover_url(self, source_url: str) -> Optional[str]:
+        html = await self._fetch_html(source_url)
+        soup = BeautifulSoup(html, "html.parser")
+        meta = soup.select_one('meta[property="og:image"]')
+        if not meta:
+            return None
+        content = meta.get("content")
+        return str(content).strip() if content else None
+
     async def extract_image_urls(self, chapter_url: str) -> list[str]:
         html = await self._fetch_html(chapter_url)
         soup = BeautifulSoup(html, "html.parser")

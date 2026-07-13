@@ -269,6 +269,22 @@
       titleEl.textContent = manga.title;
       descEl.textContent = `${manga.title} est suivi depuis ${manga.source_url}. ${manga.missing_total} chapitre(s) manquant(s) sur ${manga.remote_total}.`;
 
+      const existingCover = document.querySelector(".hero img.cover-img");
+      if (manga.cover_url) {
+        if (existingCover) {
+          existingCover.src = manga.cover_url;
+        } else {
+          const img = document.createElement("img");
+          img.className = "cover-img";
+          img.src = manga.cover_url;
+          img.alt = manga.title;
+          img.style.cssText = "max-width:120px;border-radius:8px;border:1px solid var(--line);margin-top:10px;display:block;";
+          document.querySelector(".hero h1").after(img);
+        }
+      } else if (existingCover) {
+        existingCover.remove();
+      }
+
       intervalInput.value = String(manga.scan_interval_minutes || 60);
       metaSource.textContent = manga.source_url || "-";
       metaRoot.textContent = manga.root_path || "-";
