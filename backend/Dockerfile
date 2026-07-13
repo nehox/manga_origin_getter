@@ -11,7 +11,7 @@ RUN apt-get update \
        fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml setup.py ./
+COPY pyproject.toml ./
 COPY app ./app
 
 RUN pip install --upgrade pip setuptools wheel \
