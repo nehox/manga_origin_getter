@@ -15,9 +15,12 @@ from app.models import (
     LibraryRootCreateRequest,
 )
 from app.services.job_runner import JobRunner
+from app.services import logger as app_logger
 from app.services.library_scheduler import LibraryScheduler
 from app.services.library_service import LibraryService
 from app.services.library_store import LibraryStore
+from app.services.logger import clear_logs, count_logs, list_sources, read_logs
+from app.services.purge_scheduler import PurgeScheduler
 from app.services.utils import build_job_view
 from app.storage.library_db import default_library_db_path
 from app.storage.repository import InMemoryJobRepository
@@ -32,16 +35,21 @@ runner = JobRunner(repository=repository, registry=registry, data_dir=data_dir)
 library_store = LibraryStore(default_library_db_path())
 library_service = LibraryService(library_store, registry, job_runner=runner)
 library_scheduler = LibraryScheduler(library_service)
+purge_scheduler = PurgeScheduler(library_store, runner)
 
 
 @app.on_event("startup")
 async def on_startup() -> None:
     library_scheduler.start()
+    purge_scheduler.start()
+    app_logger.info("app", "Application demarree")
 
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
+    app_logger.info("app", "Application arretee")
     await library_scheduler.stop()
+    await purge_scheduler.stop()
 
 
 @app.get("/healthz")
@@ -195,6 +203,7 @@ async def purge_storage() -> dict:
     except RuntimeError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
+    app_logger.info("purge", f"Purge manuelle: {result.get('removed_entries', 0)} entrees, {result.get('freed_bytes', 0)} octets liberes")
     return {
         "message": "Application data purged",
         **result,
@@ -243,6 +252,48 @@ async def set_adult_filter(body: dict) -> dict:
     hide = bool(body.get("hide_adult_content", False))
     library_store.set_setting("hide_adult_content", "true" if hide else "false")
     return {"hide_adult_content": hide}
+
+
+@app.get("/settings/auto-purge")
+async def get_auto_purge() -> dict:
+    enabled = library_store.get_setting("auto_purge_enabled") == "true"
+    interval_h = int(library_store.get_setting("auto_purge_interval_hours") or "24")
+    last_run = library_store.get_setting("auto_purge_last_run")
+    return {
+        "enabled": enabled,
+        "interval_hours": interval_h,
+        "last_run": last_run,
+    }
+
+
+@app.post("/settings/auto-purge")
+async def set_auto_purge(body: dict) -> dict:
+    enabled = bool(body.get("enabled", False))
+    interval_h = max(1, int(body.get("interval_hours", 24)))
+    library_store.set_setting("auto_purge_enabled", "true" if enabled else "false")
+    library_store.set_setting("auto_purge_interval_hours", str(interval_h))
+    return {"enabled": enabled, "interval_hours": interval_h}
+
+
+@app.get("/logs")
+async def get_logs(
+    limit: int = 100,
+    offset: int = 0,
+    level: str = "",
+    source: str = "",
+) -> dict:
+    level_param = level or None
+    source_param = source or None
+    entries = read_logs(limit=min(limit, 1000), offset=offset, level=level_param, source=source_param)
+    total = count_logs(level=level_param, source=source_param)
+    sources = list_sources()
+    return {"entries": entries, "total": total, "sources": sources}
+
+
+@app.delete("/logs")
+async def delete_logs() -> dict:
+    clear_logs()
+    return {"message": "Logs cleared"}
 
 
 static_dir = Path(__file__).resolve().parent / "static"

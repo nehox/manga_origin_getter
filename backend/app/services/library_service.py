@@ -7,6 +7,7 @@ from typing import Any, Optional
 from urllib.parse import urlparse
 
 from app.adapters.registry import AdapterRegistry
+from app.services import logger
 from app.services.downloader import download_images
 from app.services.job_runner import JobRunner
 from app.services.pdf_builder import build_pdf_from_images
@@ -228,7 +229,15 @@ class LibraryService:
                 status="ok",
                 error=None,
             )
+
+            title = work_title or manga["title"]
+            if missing_slugs:
+                logger.info("scan", f"{title}: {len(missing_slugs)} nouveau(x) chapitre(s) trouve(s)")
+            else:
+                logger.info("scan", f"{title}: aucun nouveau chapitre")
         except Exception as exc:
+            title = manga.get("title", f"#{manga_id}")
+            logger.error("scan", f"{title}: erreur - {exc}")
             self.store.mark_scan_result(
                 manga_id,
                 next_scan_at=self._next_scan_iso(int(manga["scan_interval_minutes"])),

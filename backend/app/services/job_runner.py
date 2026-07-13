@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from app.adapters.registry import AdapterRegistry
 from app.models import ChapterArtifact, JobCreateRequest, JobState, JobStatus
+from app.services import logger
 from app.services.downloader import download_images
 from app.services.pdf_builder import build_pdf_from_images
 from app.services.slug import to_slug
@@ -35,6 +36,7 @@ class JobRunner:
         )
         await self.repository.create(job)
 
+        logger.info("job", f"Job cree: {job.id} - {request.source_url}")
         task = asyncio.create_task(
             self._run_job_background(job.id, str(request.source_url), request.max_concurrency),
             name=f"job-{job.id}",
@@ -74,6 +76,7 @@ class JobRunner:
         )
         await self.repository.create(job)
 
+        logger.info("job", f"Job library cree: {job.id} - {work_title} ({len(chapters)} chapitres)")
         task = asyncio.create_task(
             self._run_tracked_download_job(job.id, target_dir, max_concurrency, on_chapter_done),
             name=f"job-library-{job.id}",
@@ -347,8 +350,10 @@ class JobRunner:
             chapter.pdf_path = str(pdf_path)
             job.completed_chapters = sum(1 for item in job.chapter_artifacts if item.status == JobStatus.DONE)
             await self.repository.update(job)
+            logger.info("download", f"Chapitre termine: {chapter_title} ({pdf_path.name})")
         except Exception as exc:
             chapter.status = JobStatus.FAILED
             chapter.error = str(exc)
             job.error = str(exc)
             await self.repository.update(job)
+            logger.error("download", f"Chapitre echoue: {chapter_title} - {exc}")

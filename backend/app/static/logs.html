@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logs - Manga Origin Getter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #14171d;
+      --line: #30374a;
+      --text: #e7edf7;
+      --muted: #9aa8bf;
+      --accent: #f5b126;
+      --bad: #ea5a58;
+      --ok: #3ac97b;
+      --warn: #f4a23a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: "Manrope", sans-serif; background: var(--bg); color: var(--text); }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, #191d25, #161a21);
+      padding: 14px 12px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 14px;
+    }
+    .logo { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #f7f9fe; }
+    .logo-mark { width: 26px; height: 26px; border-radius: 6px; background: linear-gradient(140deg, var(--accent), #d97f00); display: inline-flex; align-items: center; justify-content: center; color: #241800; font-weight: 900; font-size: 0.78rem; }
+    .menu { display: grid; gap: 5px; }
+    .menu a { color: #d5deeb; text-decoration: none; padding: 9px 10px; border-radius: 8px; font-size: 0.9rem; border: 1px solid transparent; }
+    .menu a.active { background: #252c3a; border-color: #374058; color: #fff; }
+    .menu a:hover { border-color: #333b4d; background: #222836; }
+
+    .main { display: grid; grid-template-rows: auto auto 1fr; min-width: 0; }
+    .topbar { padding: 12px 14px; border-bottom: 1px solid var(--line); background: #181d27; }
+    .topbar h1 { margin: 0; font-size: 1.3rem; }
+    .topbar p { margin: 5px 0 0; color: var(--muted); font-size: 0.9rem; }
+    .filters { padding: 10px 14px; border-bottom: 1px solid var(--line); background: #171c26; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .filters select { font: inherit; border: 1px solid #3a4357; background: #10141c; color: #edf2fb; padding: 7px 8px; border-radius: 7px; }
+    .filters button { font: inherit; border: 1px solid #434f68; border-radius: 7px; padding: 7px 10px; color: #edf2fb; background: #2a3243; cursor: pointer; font-weight: 600; }
+    .filters button:hover { background: #323c52; }
+    .filters .danger { background: linear-gradient(120deg, #d1483a, #a5372b); border-color: #a5372b; color: #fff; }
+    .filters .label { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+    .total { margin-left: auto; font-size: 0.82rem; color: var(--muted); }
+
+    .log-wrap { overflow: auto; padding: 0; }
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .log-table th { position: sticky; top: 0; background: #1a1f2a; text-align: left; padding: 8px 10px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #98abc7; border-bottom: 1px solid var(--line); }
+    .log-table td { padding: 5px 10px; border-bottom: 1px solid #252c3a; vertical-align: top; font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace; font-size: 0.74rem; }
+    .log-table tr:hover td { background: #1c2230; }
+    .log-table .ts { color: var(--muted); white-space: nowrap; }
+    .log-table .lvl { white-space: nowrap; font-weight: 700; }
+    .lvl-INFO { color: var(--ok); }
+    .lvl-WARN { color: var(--warn); }
+    .lvl-ERROR { color: var(--bad); }
+    .log-table .src { color: #7aa2f7; white-space: nowrap; }
+    .log-table .msg { color: var(--text); word-break: break-word; }
+
+    .placeholder { color: #9fb1cb; padding: 20px; text-align: center; }
+    .msg { color: #9fb0ca; font-size: 0.8rem; }
+
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .menu { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .menu { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-mark">MO</span><span>Manga Origin</span></div>
+      <nav class="menu">
+        <a href="/">Catalogue</a>
+        <a href="/add-manga.html">Ajouter un manga</a>
+        <a href="/link-manga.html">Lier un manga</a>
+        <a href="/downloads.html">Telechargements</a>
+        <a href="/settings.html">Parametres</a>
+        <a class="active" href="/logs.html">Logs</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h1>Logs</h1>
+        <p>Evenements de l'application (scan, telechargement, purge, etc.)</p>
+      </header>
+
+      <div class="filters">
+        <span class="label">Niveau</span>
+        <select id="levelFilter">
+          <option value="">Tous</option>
+          <option value="INFO">INFO</option>
+          <option value="WARN">WARN</option>
+          <option value="ERROR">ERROR</option>
+        </select>
+        <span class="label">Source</span>
+        <select id="sourceFilter">
+          <option value="">Toutes</option>
+        </select>
+        <button class="refresh" id="refreshBtn">Rafraichir</button>
+        <button class="danger" id="clearBtn">Effacer les logs</button>
+        <span class="total">Total: <span id="totalCount">0</span></span>
+      </div>
+
+      <section class="log-wrap">
+        <table class="log-table">
+          <thead>
+            <tr><th>Timestamp</th><th>Niveau</th><th>Source</th><th>Message</th></tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+        <div id="placeholder" class="placeholder" style="display:none;">Aucun log.</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const body = document.getElementById("logBody");
+    const placeholder = document.getElementById("placeholder");
+    const levelFilter = document.getElementById("levelFilter");
+    const sourceFilter = document.getElementById("sourceFilter");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const totalCount = document.getElementById("totalCount");
+
+    async function loadLogs() {
+      const level = levelFilter.value;
+      const source = sourceFilter.value;
+      const params = new URLSearchParams({ limit: "500" });
+      if (level) params.set("level", level);
+      if (source) params.set("source", source);
+
+      const response = await fetch(`/logs?${params}`);
+      const data = await response.json();
+      totalCount.textContent = String(data.total);
+
+      if (data.sources) {
+        const currentVal = sourceFilter.value;
+        sourceFilter.innerHTML = '<option value="">Toutes</option>';
+        for (const src of data.sources) {
+          const opt = document.createElement("option");
+          opt.value = src;
+          opt.textContent = src;
+          sourceFilter.appendChild(opt);
+        }
+        sourceFilter.value = currentVal;
+      }
+
+      body.innerHTML = "";
+      if (!data.entries.length) {
+        placeholder.style.display = "block";
+        return;
+      }
+      placeholder.style.display = "none";
+
+      for (const entry of data.entries) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="ts">${escapeHtml(entry.timestamp)}</td>
+          <td class="lvl lvl-${escapeHtml(entry.level)}">${escapeHtml(entry.level)}</td>
+          <td class="src">${escapeHtml(entry.source)}</td>
+          <td class="msg">${escapeHtml(entry.message)}</td>
+        `;
+        body.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    levelFilter.addEventListener("change", loadLogs);
+    sourceFilter.addEventListener("change", loadLogs);
+    refreshBtn.addEventListener("click", loadLogs);
+
+    clearBtn.addEventListener("click", async () => {
+      if (!confirm("Effacer tous les logs ?")) return;
+      await fetch("/logs", { method: "DELETE" });
+      await loadLogs();
+    });
+
+    loadLogs().catch(() => {});
+    setInterval(() => { loadLogs().catch(() => {}); }, 15000);
+  </script>
+</body>
+</html>

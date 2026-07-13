@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
+from app.services import logger
 from app.services.library_service import LibraryService
 
 
@@ -19,6 +20,7 @@ class LibraryScheduler:
             return
         self._running = True
         self._task = asyncio.create_task(self._loop(), name="library-scheduler")
+        logger.info("library-scheduler", "Cron de scan demarre")
 
     async def stop(self) -> None:
         self._running = False
@@ -28,11 +30,14 @@ class LibraryScheduler:
                 await self._task
             except asyncio.CancelledError:
                 pass
+        logger.info("library-scheduler", "Cron de scan arrete")
 
     async def _loop(self) -> None:
         while self._running:
             try:
                 due_ids = self.library_service.due_manga_ids()
+                if due_ids:
+                    logger.info("library-scheduler", f"{len(due_ids)} manga(s) a scanner")
                 for manga_id in due_ids:
                     if manga_id in self._locks:
                         continue

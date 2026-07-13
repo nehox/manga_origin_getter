@@ -88,6 +88,7 @@
         <a href="/link-manga.html">Lier un manga</a>
         <a href="/downloads.html">Telechargements</a>
         <a class="active" href="/settings.html">Parametres</a>
+        <a href="/logs.html">Logs</a>
       </nav>
     </aside>
 
@@ -123,6 +124,30 @@
           <p>Recharge les statistiques de stockage et de jobs en temps reel.</p>
           <div class="actions">
             <button class="refresh" id="refreshBtn" type="button">Rafraichir stats</button>
+          </div>
+        </article>
+
+        <article class="panel">
+          <h2>Purge automatique</h2>
+          <p>Planifie une purge periodique des donnees temporaires (jobs, images, PDFs). La purge est sautee si des jobs sont en cours.</p>
+          <label class="confirm">
+            <input id="autoPurgeCheck" type="checkbox" />
+            Activer la purge automatique
+          </label>
+          <label style="display:grid;gap:4px;font-size:0.84rem;color:var(--muted);">
+            Intervalle
+            <select id="autoPurgeInterval" style="max-width:160px;">
+              <option value="1">Toutes les 1 heure</option>
+              <option value="6">Toutes les 6 heures</option>
+              <option value="12">Toutes les 12 heures</option>
+              <option value="24" selected>Tous les jours</option>
+              <option value="48">Tous les 2 jours</option>
+              <option value="72">Tous les 3 jours</option>
+              <option value="168">Toutes les semaines</option>
+            </select>
+          </label>
+          <div style="font-size:0.78rem;color:var(--muted);">
+            Derniere purge : <span id="lastPurgeDisplay">-</span>
           </div>
         </article>
 
@@ -166,6 +191,9 @@
     const rootList = document.getElementById("rootList");
     const rootMsg = document.getElementById("rootMsg");
     const hideAdultCheck = document.getElementById("hideAdultCheck");
+    const autoPurgeCheck = document.getElementById("autoPurgeCheck");
+    const autoPurgeInterval = document.getElementById("autoPurgeInterval");
+    const lastPurgeDisplay = document.getElementById("lastPurgeDisplay");
 
     confirmEl.addEventListener("change", () => {
       purgeBtn.disabled = !confirmEl.checked;
@@ -178,6 +206,19 @@
         body: JSON.stringify({ hide_adult_content: hideAdultCheck.checked })
       }).catch(() => {});
     });
+
+    function saveAutoPurge() {
+      fetch("/settings/auto-purge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enabled: autoPurgeCheck.checked,
+          interval_hours: parseInt(autoPurgeInterval.value, 10),
+        })
+      }).catch(() => {});
+    }
+    autoPurgeCheck.addEventListener("change", saveAutoPurge);
+    autoPurgeInterval.addEventListener("change", saveAutoPurge);
 
     refreshBtn.addEventListener("click", () => {
       loadStats().catch((error) => {
