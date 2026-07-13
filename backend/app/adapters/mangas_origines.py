@@ -227,6 +227,16 @@ class MangasOriginesAdapter(SourceAdapter):
         content = meta.get("content")
         return str(content).strip() if content else None
 
+    async def extract_categories(self, source_url: str) -> list[str]:
+        html = await self._fetch_html(source_url)
+        soup = BeautifulSoup(html, "html.parser")
+        genres: list[str] = []
+        for a in soup.select('a[href*="/manga-genres/"]'):
+            text = a.get_text(strip=True)
+            if text and text not in genres:
+                genres.append(text)
+        return genres
+
     async def extract_image_urls(self, chapter_url: str) -> list[str]:
         html = await self._fetch_html(chapter_url)
         soup = BeautifulSoup(html, "html.parser")

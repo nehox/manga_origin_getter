@@ -167,6 +167,8 @@ class LibraryService:
         try:
             work_title, chapters = await adapter.discover_chapters(source_url)
             cover_url = await adapter.extract_cover_url(source_url)
+            raw_categories = await adapter.extract_categories(source_url)
+            categories_str = ",".join(raw_categories) if raw_categories else None
             local_subdir = str(manga["local_subdir"])
             local_dir = root / local_subdir
             local_slugs = self._local_chapter_slugs(local_dir)
@@ -217,6 +219,7 @@ class LibraryService:
                 scan_interval_minutes=int(manga["scan_interval_minutes"]),
                 auto_download_missing=bool(int(manga.get("auto_download_missing") or 0)),
                 cover_url=cover_url,
+                categories=categories_str,
             )
 
             self.store.mark_scan_result(
@@ -414,10 +417,19 @@ class LibraryService:
             if root_row:
                 root_path = str(root_row["path"])
 
+        raw_categories = manga.get("categories")
+        categories_list: list[str] = []
+        if raw_categories and str(raw_categories).strip():
+            categories_list = [c.strip() for c in str(raw_categories).split(",") if c.strip()]
+        source_url = str(manga.get("source_url", ""))
+        is_adult = "hentai-origines" in source_url
+
         return {
             **manga,
             "root_path": root_path,
             "auto_download_missing": bool(int(manga.get("auto_download_missing") or 0)),
+            "categories": categories_list,
+            "is_adult": is_adult,
             "remote_total": len(remote_present),
             "present_total": len(local_present),
             "missing_total": len(missing),

@@ -23,3 +23,6 @@ class SourceAdapter:
 
     async def extract_cover_url(self, source_url: str) -> Optional[str]:
         raise NotImplementedError
+
+    async def extract_categories(self, source_url: str) -> list[str]:
+        raise NotImplementedError

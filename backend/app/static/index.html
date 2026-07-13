@@ -39,8 +39,8 @@
 
     .main { display: grid; grid-template-rows: auto auto 1fr; min-width: 0; }
     .topbar { padding: 12px 14px; border-bottom: 1px solid var(--line); background: #181d27; display: grid; gap: 10px; }
-    .search-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
-    .search-wrap { display: flex; align-items: center; gap: 8px; border: 1px solid #3a4357; background: #10141c; border-radius: 8px; padding: 0 10px; min-height: 38px; }
+    .search-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .search-wrap { display: flex; align-items: center; gap: 8px; border: 1px solid #3a4357; background: #10141c; border-radius: 8px; padding: 0 10px; min-height: 38px; flex: 1 1 200px; }
     .search-wrap input { border: none; outline: none; width: 100%; background: transparent; color: #edf2fb; font: inherit; }
     .search-wrap input::placeholder { color: #7e8ca5; }
     select, button { font: inherit; border-radius: 7px; }
@@ -81,7 +81,7 @@
     }
     @media (max-width: 760px) {
       .menu { grid-template-columns: 1fr; }
-      .search-row { grid-template-columns: 1fr; }
+      .search-row { flex-direction: column; }
       .grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -109,6 +109,12 @@
             <option value="ok">Complets</option>
             <option value="error">Scan en erreur</option>
           </select>
+          <select id="categorySelect">
+            <option value="all">Toutes categories</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--muted);white-space:nowrap;">
+            <input id="hideAdultCheck" type="checkbox" /> Masquer 18+
+          </label>
           <button id="scanAllBtn" class="accent" type="button">Scanner toute la collection</button>
         </div>
         <div id="tableMsg" class="msg"></div>
@@ -126,6 +132,8 @@
   <script>
     const searchInput = document.getElementById("searchInput");
     const filterSelect = document.getElementById("filterSelect");
+    const categorySelect = document.getElementById("categorySelect");
+    const hideAdultCheck = document.getElementById("hideAdultCheck");
     const scanAllBtn = document.getElementById("scanAllBtn");
     const tableMsg = document.getElementById("tableMsg");
 
@@ -134,9 +142,20 @@
     const mangaGrid = document.getElementById("mangaGrid");
 
     let overview = null;
+    let hideAdult = false;
 
     searchInput.addEventListener("input", renderOverview);
     filterSelect.addEventListener("change", renderOverview);
+    categorySelect.addEventListener("change", renderOverview);
+    hideAdultCheck.addEventListener("change", () => {
+      hideAdult = hideAdultCheck.checked;
+      fetch("/settings/adult-filter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hide_adult_content: hideAdult })
+      }).catch(() => {});
+      renderOverview();
+    });
 
     scanAllBtn.addEventListener("click", async () => {
       scanAllBtn.disabled = true;
@@ -160,7 +179,14 @@
     function filterMangas(items) {
       const q = searchInput.value.trim().toLowerCase();
       const mode = filterSelect.value;
+      const selectedCategory = categorySelect.value;
       return items.filter((manga) => {
+        if (hideAdult && manga.is_adult) return false;
+        if (selectedCategory !== "all") {
+          const cats = manga.categories || [];
+          if (!cats.includes(selectedCategory)) return false;
+        }
+
         const matchesSearch = !q
           || String(manga.title || "").toLowerCase().includes(q)
           || String(manga.source_url || "").toLowerCase().includes(q)
@@ -174,10 +200,29 @@
       });
     }
 
+    function buildCategoryOptions(mangas) {
+      const all = new Set();
+      for (const m of mangas) {
+        if (m.categories) {
+          for (const c of m.categories) all.add(c);
+        }
+      }
+      const sorted = Array.from(all).sort();
+      categorySelect.innerHTML = '<option value="all">Toutes categories</option>';
+      for (const c of sorted) {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        categorySelect.appendChild(opt);
+      }
+    }
+
     function renderOverview() {
       if (!overview) return;
       trackedCount.textContent = String(overview.mangas.length);
       unlinkedCount.textContent = String(overview.unlinked_dirs.length);
+
+      buildCategoryOptions(overview.mangas);
 
       const visible = filterMangas(overview.mangas);
       mangaGrid.innerHTML = "";
@@ -206,6 +251,9 @@
           : '<span class="chip warn">Auto OFF</span>';
         const coverUrl = manga.cover_url || "";
         const coverStyle = coverUrl ? `background-image:url(${escapeHtml(coverUrl)});background-size:cover;background-position:center;` : "";
+        const categoriesChips = (manga.categories || []).map(c =>
+          `<span class="chip info">${escapeHtml(c)}</span>`
+        ).join("");
 
         card.innerHTML = `
           <div class="poster" style="${coverStyle}">
@@ -216,6 +264,7 @@
           <div class="card-body">
             <div class="small">${manga.present_total}/${manga.remote_total} chapitres presents</div>
             <div class="chips">${missingChip}${autoChip}</div>
+            ${categoriesChips ? `<div class="chips">${categoriesChips}</div>` : ""}
             <div class="small">Prochain scan: ${escapeHtml(manga.next_scan_at || "-")}</div>
           </div>
         `;
@@ -224,12 +273,20 @@
     }
 
     async function refreshOverview() {
-      const response = await fetch("/library/overview");
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.detail || `HTTP ${response.status}`);
+      const [overviewRes, filterRes] = await Promise.all([
+        fetch("/library/overview"),
+        fetch("/settings/adult-filter"),
+      ]);
+      if (!overviewRes.ok) {
+        const payload = await overviewRes.json().catch(() => ({}));
+        throw new Error(payload.detail || `HTTP ${overviewRes.status}`);
       }
-      overview = await response.json();
+      overview = await overviewRes.json();
+      if (filterRes.ok) {
+        const filterData = await filterRes.json();
+        hideAdult = filterData.hide_adult_content;
+        hideAdultCheck.checked = hideAdult;
+      }
       renderOverview();
     }
 

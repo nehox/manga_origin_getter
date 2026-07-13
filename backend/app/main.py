@@ -232,5 +232,18 @@ async def download_chapter_pdf(job_id: str, chapter_slug: str) -> FileResponse:
     return FileResponse(path=file_path, filename=file_path.name, media_type="application/pdf")
 
 
+@app.get("/settings/adult-filter")
+async def get_adult_filter() -> dict:
+    value = library_store.get_setting("hide_adult_content")
+    return {"hide_adult_content": value == "true"}
+
+
+@app.post("/settings/adult-filter")
+async def set_adult_filter(body: dict) -> dict:
+    hide = bool(body.get("hide_adult_content", False))
+    library_store.set_setting("hide_adult_content", "true" if hide else "false")
+    return {"hide_adult_content": hide}
+
+
 static_dir = Path(__file__).resolve().parent / "static"
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")

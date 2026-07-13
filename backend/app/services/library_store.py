@@ -80,6 +80,8 @@ class LibraryStore:
                 conn.execute("ALTER TABLE library_manga ADD COLUMN root_id INTEGER")
             if "cover_url" not in columns:
                 conn.execute("ALTER TABLE library_manga ADD COLUMN cover_url TEXT")
+            if "categories" not in columns:
+                conn.execute("ALTER TABLE library_manga ADD COLUMN categories TEXT")
             conn.commit()
             self._migrate_legacy_root(conn)
 
@@ -184,6 +186,7 @@ class LibraryStore:
         auto_download_missing: bool,
         root_id: Optional[int] = None,
         cover_url: Optional[str] = None,
+        categories: Optional[str] = None,
     ) -> int:
         now = utcnow_iso()
         with self._lock, self._connect() as conn:
@@ -199,7 +202,8 @@ class LibraryStore:
                         """
                         UPDATE library_manga
                         SET title = ?, slug = ?, local_subdir = ?, scan_interval_minutes = ?,
-                            auto_download_missing = ?, root_id = ?, cover_url = ?, updated_at = ?
+                            auto_download_missing = ?, root_id = ?, cover_url = ?,
+                            categories = ?, updated_at = ?
                         WHERE id = ?
                         """,
                         (
@@ -210,6 +214,7 @@ class LibraryStore:
                             1 if auto_download_missing else 0,
                             root_id,
                             cover_url,
+                            categories,
                             now,
                             manga_id,
                         ),
@@ -219,7 +224,8 @@ class LibraryStore:
                         """
                         UPDATE library_manga
                         SET title = ?, slug = ?, local_subdir = ?, scan_interval_minutes = ?,
-                            auto_download_missing = ?, cover_url = ?, updated_at = ?
+                            auto_download_missing = ?, cover_url = ?, categories = ?,
+                            updated_at = ?
                         WHERE id = ?
                         """,
                         (
@@ -229,6 +235,7 @@ class LibraryStore:
                             scan_interval_minutes,
                             1 if auto_download_missing else 0,
                             cover_url,
+                            categories,
                             now,
                             manga_id,
                         ),
@@ -238,9 +245,9 @@ class LibraryStore:
                     """
                     INSERT INTO library_manga(
                         title, slug, source_url, local_subdir, scan_interval_minutes,
-                        auto_download_missing, root_id, cover_url,
+                        auto_download_missing, root_id, cover_url, categories,
                         created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         title,
@@ -251,6 +258,7 @@ class LibraryStore:
                         1 if auto_download_missing else 0,
                         root_id,
                         cover_url,
+                        categories,
                         now,
                         now,
                     ),
@@ -324,7 +332,7 @@ class LibraryStore:
             rows = conn.execute(
                 """
                 SELECT id, title, slug, source_url, local_subdir, scan_interval_minutes,
-                      auto_download_missing, root_id, cover_url,
+                      auto_download_missing, root_id, cover_url, categories,
                        last_scan_at, next_scan_at, last_scan_status, last_scan_error
                 FROM library_manga
                 ORDER BY updated_at DESC, id DESC
@@ -337,7 +345,7 @@ class LibraryStore:
             row = conn.execute(
                 """
                 SELECT id, title, slug, source_url, local_subdir, scan_interval_minutes,
-                      auto_download_missing, root_id, cover_url,
+                      auto_download_missing, root_id, cover_url, categories,
                        last_scan_at, next_scan_at, last_scan_status, last_scan_error
                 FROM library_manga
                 WHERE id = ?

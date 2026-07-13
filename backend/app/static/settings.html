@@ -126,6 +126,15 @@
           </div>
         </article>
 
+        <article class="panel">
+          <h2>Contenu adulte</h2>
+          <p>Masque automatiquement les mangas issus de hentai-origines.com dans le catalogue.</p>
+          <label class="confirm">
+            <input id="hideAdultCheck" type="checkbox" />
+            Masquer le contenu 18+
+          </label>
+        </article>
+
         <article class="panel danger">
           <h2>Zone sensible</h2>
           <p>La purge supprime les donnees locales de l'application: jobs en memoire, images temporaires et exports PDF sous data/jobs.</p>
@@ -156,9 +165,18 @@
     const addRootBtn = document.getElementById("addRootBtn");
     const rootList = document.getElementById("rootList");
     const rootMsg = document.getElementById("rootMsg");
+    const hideAdultCheck = document.getElementById("hideAdultCheck");
 
     confirmEl.addEventListener("change", () => {
       purgeBtn.disabled = !confirmEl.checked;
+    });
+
+    hideAdultCheck.addEventListener("change", () => {
+      fetch("/settings/adult-filter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hide_adult_content: hideAdultCheck.checked })
+      }).catch(() => {});
     });
 
     refreshBtn.addEventListener("click", () => {
@@ -305,6 +323,10 @@
     loadRoots().catch((error) => {
       rootMsg.textContent = `Erreur initiale: ${error}`;
     });
+
+    fetch("/settings/adult-filter").then(r => r.json()).then(data => {
+      hideAdultCheck.checked = data.hide_adult_content;
+    }).catch(() => {});
   </script>
 </body>
 </html>

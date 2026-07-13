@@ -15,3 +15,6 @@ class HentaiOriginesAdapter(MangasOriginesAdapter):
 
     async def extract_cover_url(self, source_url: str) -> Optional[str]:
         return None
+
+    async def extract_categories(self, source_url: str) -> list[str]:
+        return ["Adulte"]
